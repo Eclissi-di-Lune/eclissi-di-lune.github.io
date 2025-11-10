@@ -1,60 +1,112 @@
-body {
-    font-family: 'Courier New', monospace;
-    background-color: #0a0a0a;
-    color: #00ff00;
+* {
     margin: 0;
-    padding: 20px;
-    line-height: 1.6;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-.container {
-    max-width: 600px;
-    margin: 50px auto;
+body {
+    background-color: #000000;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    height: 100vh;
+    overflow: hidden;
     padding: 20px;
-    border: 1px solid #00ff00;
-    border-radius: 5px;
-    background-color: #111;
 }
 
-h1 {
-    text-align: center;
+.terminal {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.line {
+    margin-bottom: 15px;
+    opacity: 0;
+    animation: fadeIn 0.5s forwards;
+}
+
+.prompt {
+    color: #00ff00;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.typing-text {
+    font-size: 1.2em;
+    border-right: 2px solid #00ff00;
+    animation: blink 1s infinite;
+}
+
+/* Effetto macchina da scrivere */
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+@keyframes blink {
+    0%, 50% { border-color: #00ff00; }
+    51%, 100% { border-color: transparent; }
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* Titolo principale */
+#title {
+    font-size: 1.8em;
     color: #00ff00;
     text-shadow: 0 0 10px #00ff00;
+    display: inline-block;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
-.input-group {
+/* Input styling */
+.input-line {
     display: flex;
-    gap: 10px;
-    margin: 30px 0;
+    align-items: center;
 }
 
-input {
+.input-text {
+    margin-right: 10px;
+}
+
+#codeInput {
+    background: transparent;
+    border: none;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    outline: none;
     flex: 1;
-    padding: 10px;
-    background: #000;
-    border: 1px solid #00ff00;
-    color: #00ff00;
-    font-family: 'Courier New', monospace;
 }
 
-button {
-    padding: 10px 20px;
-    background: #003300;
-    color: #00ff00;
-    border: 1px solid #00ff00;
-    cursor: pointer;
-    font-family: 'Courier New', monospace;
-}
-
-button:hover {
-    background: #005500;
+#codeInput::placeholder {
+    color: #008800;
 }
 
 .result {
     margin-top: 20px;
     padding: 15px;
-    border: 1px solid #444;
-    border-radius: 3px;
-    min-height: 50px;
-    background: #1a1a1a;
+    border-left: 3px solid #00ff00;
+    background: rgba(0, 255, 0, 0.05);
+    display: none;
+}
+
+/* Effetto scanlines per atmosfera CRT */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        transparent 50%,
+        rgba(0, 255, 0, 0.03) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 1000;
 }

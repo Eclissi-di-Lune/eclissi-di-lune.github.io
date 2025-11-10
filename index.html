@@ -3,19 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Il Mistero - ARG</title>
+    <title>Terminale Fondazione 0X41</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>🔍 Il Grande Mistero</h1>
-        <p>Inserisci il codice che hai trovato:</p>
-        
-        <div class="input-group">
-            <input type="text" id="codeInput" placeholder="Inserisci il codice...">
-            <button onclick="checkCode()">Verifica</button>
+    <div class="terminal">
+        <!-- Prima riga: Titolo con effetto typing -->
+        <div class="line">
+            <span class="prompt">></span>
+            <span id="title" class="typing-text"></span>
         </div>
         
+        <!-- Seconda riga: Separatore -->
+        <div class="line">
+            <span class="prompt">></span>
+            <span id="separator" class="typing-text"></span>
+        </div>
+        
+        <!-- Terza riga: Motto -->
+        <div class="line">
+            <span class="prompt">></span>
+            <span id="motto" class="typing-text"></span>
+        </div>
+        
+        <!-- Quarta riga: Separatore -->
+        <div class="line">
+            <span class="prompt">></span>
+            <span id="separator2" class="typing-text"></span>
+        </div>
+        
+        <!-- Quinta riga: Status -->
+        <div class="line">
+            <span class="prompt">></span>
+            <span id="status" class="typing-text"></span>
+        </div>
+        
+        <!-- Input utente (compare dopo la sequenza) -->
+        <div class="line input-line" style="display: none;" id="inputLine">
+            <span class="prompt">></span>
+            <span class="input-text">Inserire dati utente: </span>
+            <input type="text" id="codeInput" autocomplete="off" autofocus>
+        </div>
+
+        <!-- Risultato (compare dopo l'input) -->
         <div id="result" class="result"></div>
     </div>
 
