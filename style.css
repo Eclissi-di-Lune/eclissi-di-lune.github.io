@@ -28,6 +28,11 @@ h1 {
     margin-bottom: 20px;
 }
 
+.lightning {
+    filter: hue-rotate(60deg) saturate(200%) brightness(0.8);
+    display: inline-block;
+}
+
 .separator {
     font-size: 1.2em;
     margin: 15px 0;
