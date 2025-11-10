@@ -29,8 +29,8 @@ h1 {
 }
 
 .lightning {
-    filter: hue-rotate(60deg) saturate(200%) brightness(0.8);
-    display: inline-block;
+    color: transparent;  
+    text-shadow: 0 0 0 #00ff00;
 }
 
 .separator {
