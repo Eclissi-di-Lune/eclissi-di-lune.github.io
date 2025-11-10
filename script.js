@@ -11,10 +11,10 @@ function accedi() {
     
     // Avvia l'effetto typing
     typeText("typingText", "Sistema di autenticazione avviato...", 50, function() {
-        // Quando finisce il typing, mostra l'input
+        // Quando finisce il typing, mostra l'input per la traccia di sangue
         setTimeout(function() {
             document.getElementById('inputContainer').style.display = 'flex';
-            document.getElementById('codeInput').focus();
+            document.getElementById('playerNameInput').focus();
         }, 500);
     });
 }
@@ -40,33 +40,124 @@ function typeText(elementId, text, speed, callback) {
     type();
 }
 
-// Funzione per verificare i codici
-function checkCode() {
-    const code = document.getElementById('codeInput').value.trim();
+// Funzione per verificare il nome del giocatore
+function checkPlayerName() {
+    const playerName = document.getElementById('playerNameInput').value.trim();
     const resultDiv = document.getElementById('result');
     
-    // Mappa temporanea - POI SOSTITUIRAI CON NETLIFY FUNCTIONS
-    const codeMap = {
-        "DRAGONE-ANTICO": "Il drago si risveglia quando la luna è alta. Cerca dove le ombre si allungano al tramonto.",
-        "SEGRETO-PERDUTO": "La verità giace sotto lo sguardo del guardiano di pietra. Cerca il leone che non ruggisce.",
-        "CODICE-OMBRA": "Nell'acqua che non scorre, troverai la prossima chiave. La fontana muta attende."
-    };
-    
-    if (codeMap[code]) {
-        resultDiv.innerHTML = codeMap[code];
-        resultDiv.style.borderColor = "#00ff00";
-    } else {
-        resultDiv.innerHTML = "CODICE NON RICONOSCIUTO. CONTROLLARE E RIPROVARE.";
-        resultDiv.style.borderColor = "#ff0000";
+    // Controllo frontend per "Archibald" - crash della pagina
+    if (playerName === "Archibald") {
+        // Simuliamo un crash con un errore
+        throw new Error("Accesso negato: Rilevata traccia di sangue contaminata");
     }
     
-    // Pulisce l'input dopo l'invio
-    document.getElementById('codeInput').value = '';
+    // Verifica con il backend
+    checkPlayerNameBackend(playerName);
 }
 
-// Permette di inviare con Enter
-document.getElementById('codeInput').addEventListener('keypress', function(e) {
+// Funzione per verificare il nome nel backend
+async function checkPlayerNameBackend(playerName) {
+    const resultDiv = document.getElementById('result');
+    
+    try {
+        // Chiamata alla Netlify Function
+        const response = await fetch('/.netlify/functions/check-player', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ playerName: playerName }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            // Se il nome è valido, mostra il secondo step
+            showSecondStep(playerName);
+        } else {
+            // Se il nome non è valido, mostra un errore
+            resultDiv.innerHTML = "Traccia di sangue non riconosciuta. Accesso negato.";
+            resultDiv.style.display = 'block';
+            resultDiv.style.borderColor = "#ff0000";
+        }
+    } catch (error) {
+        console.error('Errore:', error);
+        resultDiv.innerHTML = "Errore di connessione al server centrale.";
+        resultDiv.style.display = 'block';
+        resultDiv.style.borderColor = "#ff0000";
+    }
+}
+
+// Funzione per mostrare il secondo step
+function showSecondStep(playerName) {
+    // Nasconde il primo input
+    document.getElementById('inputContainer').style.display = 'none';
+    document.getElementById('result').style.display = 'none';
+    
+    // Mostra il secondo step
+    document.getElementById('secondStep').style.display = 'block';
+    
+    // Avvia l'effetto typing per il messaggio di benvenuto
+    const welcomeMessage = "| Caricamento...\n| Campione Riconosciuto. Bentornata " + playerName + ".";
+    typeText("welcomeText", welcomeMessage, 50, function() {
+        // Quando finisce il typing, mostra l'input per il codice del file
+        setTimeout(function() {
+            document.getElementById('fileCodeInputContainer').style.display = 'flex';
+            document.getElementById('fileCodeInput').focus();
+        }, 500);
+    });
+}
+
+// Funzione per verificare il codice del file
+function checkFileCode() {
+    const fileCode = document.getElementById('fileCodeInput').value.trim();
+    checkFileCodeBackend(fileCode);
+}
+
+// Funzione per verificare il codice del file nel backend
+async function checkFileCodeBackend(fileCode) {
+    const fileResultDiv = document.getElementById('fileResult');
+    
+    try {
+        const response = await fetch('/.netlify/functions/check-code', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code: fileCode }),
+        });
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            fileResultDiv.innerHTML = data.message;
+            fileResultDiv.style.borderColor = "#00ff00";
+        } else {
+            fileResultDiv.innerHTML = "Codice file non valido. Verificare e riprovare.";
+            fileResultDiv.style.borderColor = "#ff0000";
+        }
+        
+        fileResultDiv.style.display = 'block';
+        
+        // Pulisce l'input dopo l'invio
+        document.getElementById('fileCodeInput').value = '';
+    } catch (error) {
+        console.error('Errore:', error);
+        fileResultDiv.innerHTML = "Errore di connessione al database centrale.";
+        fileResultDiv.style.display = 'block';
+        fileResultDiv.style.borderColor = "#ff0000";
+    }
+}
+
+// Permette di inviare con Enter per entrambi gli input
+document.getElementById('playerNameInput')?.addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
-        checkCode();
+        checkPlayerName();
+    }
+});
+
+document.getElementById('fileCodeInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        checkFileCode();
     }
 });
