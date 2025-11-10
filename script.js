@@ -47,8 +47,8 @@ function checkPlayerName() {
     
     // Controllo frontend per "Archibald" - crash della pagina
     if (playerName === "Archibald") {
-        // Simuliamo un crash con un errore
-        throw new Error("Accesso negato: Rilevata traccia di sangue contaminata");
+        window.close();
+        throw new Error("Accesso negato: REDACT-----");
     }
     
     // Verifica con il backend
