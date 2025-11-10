@@ -33,13 +33,13 @@ function addSystemMessage(message, withTyping = true) {
     return Promise.resolve();
 }
 
-function addUserInputLine(prefix) {
+function addUserInputLine(input) {
     const output = document.getElementById('terminalOutput');
     const inputLine = document.createElement('div');
     inputLine.className = 'user-input-line';
     inputLine.innerHTML = `
         <span class="user-prompt">></span>
-        <span class="user-input">${prefix}</span>
+        <span class="user-input">${input}</span>
     `;
     
     output.appendChild(inputLine);
@@ -53,14 +53,25 @@ function showInput(placeholder, callback) {
     
     input.placeholder = placeholder;
     input.value = '';
+    
+    // Rimuovi i listener precedenti per evitare duplicati
+    input.onkeypress = null;
+    button.onclick = null;
+    
     input.onkeypress = function(e) {
         if (e.key === 'Enter') {
-            callback(input.value.trim());
+            const value = input.value.trim();
+            if (value) {
+                callback(value);
+            }
         }
     };
     
     button.onclick = function() {
-        callback(input.value.trim());
+        const value = input.value.trim();
+        if (value) {
+            callback(value);
+        }
     };
     
     inputLine.style.display = 'flex';
@@ -74,6 +85,7 @@ function hideInput() {
 function typeText(element, text, speed, callback) {
     let i = 0;
     element.textContent = '';
+    element.style.borderRight = '2px solid #00ff00';
     
     function type() {
         if (i < text.length) {
@@ -81,6 +93,7 @@ function typeText(element, text, speed, callback) {
             i++;
             setTimeout(type, speed);
         } else if (callback) {
+            element.style.borderRight = 'none';
             callback();
         }
     }
@@ -93,20 +106,45 @@ async function startTerminalSequence() {
     await addSystemMessage("Sistema di autenticazione avviato...");
     await addSystemMessage("Inserire traccia di sangue.");
     
-    showInput("Inserire nome agente", async (playerName) => {
-        if (playerName === "Archibald") {
-            // Crash simulato per Archibald
-            document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">💥 SISTEMA COMPROMESSO 💥<br>Accesso negato: Rilevata contaminazione</div>';
-            return;
-        }
-        
+    showInput("Inserire nome agente", async (playerName) => {        
         // Aggiungi la riga con l'input dell'utente
         addUserInputLine(playerName);
         hideInput();
         
-        // Verifica il nome con il backend
-        await checkPlayerNameBackend(playerName);
+        // Prima verifica gli effetti speciali
+        const hasSpecialEffect = await checkGlitchEffects(playerName);
+        
+        // Se non c'è effetto speciale, procedi con la verifica normale
+        if (!hasSpecialEffect) {
+            await checkPlayerNameBackend(playerName);
+        }
     });
+}
+
+// Funzione per verificare effetti speciali
+async function checkGlitchEffects(playerName) {
+    try {
+        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/glitch-effect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.effect && data.effect !== 'none') {
+            await showSpecialEffect(data);
+            return true; // Indica che c'è stato un effetto speciale
+        }
+        return false;
+    } catch (error) {
+        console.error('Errore effetti speciali:', error);
+        return false;
+    }
 }
 
 // Verifica del nome del giocatore
@@ -119,6 +157,10 @@ async function checkPlayerNameBackend(playerName) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
         
@@ -144,6 +186,11 @@ async function showSecondStep() {
     await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
     await addSystemMessage("Sistema pronto. Inserire codice file.");
     
+    startFileInputLoop();
+}
+
+// Loop per input file
+function startFileInputLoop() {
     showInput("Inserire codice file", async (fileCode) => {
         // Aggiungi la riga con l'input dell'utente
         addUserInputLine(fileCode);
@@ -152,16 +199,8 @@ async function showSecondStep() {
         // Verifica il codice del file
         await checkFileCodeBackend(fileCode);
         
-        // Dopo la risposta, mostra di nuovo l'input per nuovi codici
-        setTimeout(() => {
-            showInput("Inserire codice file", async (newFileCode) => {
-                addUserInputLine(newFileCode);
-                hideInput();
-                await checkFileCodeBackend(newFileCode);
-                // Continua a mostrare l'input per nuovi codici
-                setTimeout(() => showInput("Inserire codice file", arguments.callee), 1000);
-            });
-        }, 1000);
+        // Continua il loop
+        startFileInputLoop();
     });
 }
 
@@ -175,6 +214,10 @@ async function checkFileCodeBackend(fileCode) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
         });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
         
@@ -190,3 +233,103 @@ async function checkFileCodeBackend(fileCode) {
         await addSystemMessage("ERRORE: Connessione al database centrale fallita.", false);
     }
 }
+
+// Funzione per mostrare effetti speciali
+async function showSpecialEffect(data) {
+    if (data.effect === 'ascii_art') {
+        // Nascondi il terminale
+        document.getElementById('terminal').style.display = 'none';
+        
+        // Crea un div per l'effetto
+        const effectContainer = document.createElement('div');
+        effectContainer.id = 'special-effect';
+        effectContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            font-size: 12px;
+            line-height: 1;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            text-align: center;
+        `;
+        
+        // Aggiungi l'ASCII art
+        effectContainer.textContent = data.art;
+        document.body.appendChild(effectContainer);
+        
+        // Effetto flicker
+        await flickerEffect(effectContainer);
+        
+        // Dopo l'effetto, gestisci la chiusura
+        if (data.closePage) {
+            setTimeout(() => {
+                // Tenta di chiudere la finestra
+                if (!window.closed) {
+                    window.close();
+                }
+                // Fallback: mostra messaggio di errore
+                setTimeout(() => {
+                    document.body.innerHTML = `
+                        <div style="color: red; text-align: center; margin-top: 50px; padding: 20px;">
+                            <h1>💥 SISTEMA COMPROMESSO 💥</h1>
+                            <p>Accesso negato: Rilevata contaminazione Archibald</p>
+                            <p>La pagina verrà chiusa automaticamente.</p>
+                        </div>
+                    `;
+                }, 1000);
+            }, 3000);
+        }
+    }
+}
+
+// Funzione per l'effetto flicker
+async function flickerEffect(container) {
+    const flickerDuration = 3000;
+    const startTime = Date.now();
+    
+    function flicker() {
+        if (Date.now() - startTime < flickerDuration) {
+            const random = Math.random();
+            if (random > 0.7) {
+                container.style.background = '#00ff00';
+                container.style.color = 'black';
+            } else {
+                container.style.background = 'black';
+                container.style.color = '#00ff00';
+            }
+            setTimeout(flicker, 50 + Math.random() * 150);
+        } else {
+            container.style.background = 'black';
+            container.style.color = '#00ff00';
+        }
+    }
+    
+    flicker();
+}
+
+// Event listeners per Enter
+document.addEventListener('DOMContentLoaded', function() {
+    // Aggiungi listener globali per Enter
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            const currentInput = document.getElementById('currentInput');
+            if (currentInput && currentInput.style.display !== 'none') {
+                const value = currentInput.value.trim();
+                if (value) {
+                    // Simula il click sul bottone
+                    document.getElementById('submitButton')?.click();
+                }
+            }
+        }
+    });
+});
