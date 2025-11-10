@@ -1,27 +1,77 @@
+let currentPlayerName = '';
+
 function accedi() {
-    // Cambia lo stato da Offline a Online
     document.getElementById('statusText').textContent = 'Online';
     document.querySelector('.status').classList.add('online');
-    
-    // Nasconde il bottone Accedi
     document.getElementById('loginBtn').style.display = 'none';
-    
-    // Mostra il terminale
     document.getElementById('terminal').style.display = 'block';
     
-    // Avvia l'effetto typing
-    typeText("typingText", "Sistema di autenticazione avviato...", 50, function() {
-        // Quando finisce il typing, mostra l'input per la traccia di sangue
-        setTimeout(function() {
-            document.getElementById('inputContainer').style.display = 'flex';
-            document.getElementById('playerNameInput').focus();
-        }, 500);
-    });
+    startTerminalSequence();
 }
 
-// Funzione per l'effetto typing
-function typeText(elementId, text, speed, callback) {
-    const element = document.getElementById(elementId);
+// Funzioni per gestire il terminale
+function addSystemMessage(message, withTyping = true) {
+    const output = document.getElementById('terminalOutput');
+    const messageLine = document.createElement('div');
+    messageLine.className = 'message-line';
+    
+    messageLine.innerHTML = `
+        <span class="system-prompt">|</span>
+        <span class="system-message" id="systemMsg_${Date.now()}">${withTyping ? '' : message}</span>
+    `;
+    
+    output.appendChild(messageLine);
+    output.scrollTop = output.scrollHeight;
+    
+    if (withTyping) {
+        const messageElement = messageLine.querySelector('.system-message');
+        return new Promise(resolve => {
+            typeText(messageElement, message, 30, resolve);
+        });
+    }
+    
+    return Promise.resolve();
+}
+
+function addUserInputLine(prefix) {
+    const output = document.getElementById('terminalOutput');
+    const inputLine = document.createElement('div');
+    inputLine.className = 'user-input-line';
+    inputLine.innerHTML = `
+        <span class="user-prompt">></span>
+        <span class="user-input">${prefix}</span>
+    `;
+    
+    output.appendChild(inputLine);
+    output.scrollTop = output.scrollHeight;
+}
+
+function showInput(placeholder, callback) {
+    const inputLine = document.getElementById('currentInputLine');
+    const input = document.getElementById('currentInput');
+    const button = document.getElementById('submitButton');
+    
+    input.placeholder = placeholder;
+    input.value = '';
+    input.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            callback(input.value.trim());
+        }
+    };
+    
+    button.onclick = function() {
+        callback(input.value.trim());
+    };
+    
+    inputLine.style.display = 'flex';
+    input.focus();
+}
+
+function hideInput() {
+    document.getElementById('currentInputLine').style.display = 'none';
+}
+
+function typeText(element, text, speed, callback) {
     let i = 0;
     element.textContent = '';
     
@@ -30,37 +80,40 @@ function typeText(elementId, text, speed, callback) {
             element.textContent += text.charAt(i);
             i++;
             setTimeout(type, speed);
-        } else {
-            // Rimuove il cursore quando finisce
-            element.style.borderRight = 'none';
-            if (callback) callback();
+        } else if (callback) {
+            callback();
         }
     }
     
     type();
 }
 
-// Funzione per verificare il nome del giocatore
-function checkPlayerName() {
-    const playerName = document.getElementById('playerNameInput').value.trim();
-    const resultDiv = document.getElementById('result');
+// Sequenza principale del terminale
+async function startTerminalSequence() {
+    await addSystemMessage("Sistema di autenticazione avviato...");
+    await addSystemMessage("Inserire traccia di sangue.");
     
-    // Controllo frontend per "Archibald" - crash della pagina
-    if (playerName === "Archibald") {
-        window.close();
-        throw new Error("Accesso negato: REDACT-----");
-    }
-    
-    // Verifica con il backend
-    checkPlayerNameBackend(playerName);
+    showInput("Inserire nome agente", async (playerName) => {
+        if (playerName === "Archibald") {
+            // Crash simulato per Archibald
+            document.body.innerHTML = '<div style="color: red; text-align: center; margin-top: 50px;">💥 SISTEMA COMPROMESSO 💥<br>Accesso negato: Rilevata contaminazione</div>';
+            return;
+        }
+        
+        // Aggiungi la riga con l'input dell'utente
+        addUserInputLine(playerName);
+        hideInput();
+        
+        // Verifica il nome con il backend
+        await checkPlayerNameBackend(playerName);
+    });
 }
 
-// Funzione per verificare il nome nel backend
+// Verifica del nome del giocatore
 async function checkPlayerNameBackend(playerName) {
-    const resultDiv = document.getElementById('result');
-    
     try {
-        // Chiamata alla Netlify Function
+        await addSystemMessage("Verifica traccia di sangue in corso...");
+        
         const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -70,53 +123,53 @@ async function checkPlayerNameBackend(playerName) {
         const data = await response.json();
         
         if (data.valid) {
-            // Se il nome è valido, mostra il secondo step
-            showSecondStep(playerName);
+            currentPlayerName = playerName;
+            await addSystemMessage("Traccia di sangue verificata. Accesso consentito.");
+            await showSecondStep();
         } else {
-            // Se il nome non è valido, mostra un errore
-            resultDiv.innerHTML = "Traccia di sangue non riconosciuta. Accesso negato.";
-            resultDiv.style.display = 'block';
-            resultDiv.style.borderColor = "#ff0000";
+            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.", false);
+            await addSystemMessage("Riprovare l'autenticazione...", false);
+            // Ricomincia la sequenza
+            setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        console.error('Errore:', error);
-        resultDiv.innerHTML = "Errore di connessione al server centrale.";
-        resultDiv.style.display = 'block';
-        resultDiv.style.borderColor = "#ff0000";
+        await addSystemMessage("ERRORE: Connessione al server centrale fallita.", false);
+        setTimeout(startTerminalSequence, 2000);
     }
 }
 
-// Funzione per mostrare il secondo step
-function showSecondStep(playerName) {
-    // Nasconde il primo input
-    document.getElementById('inputContainer').style.display = 'none';
-    document.getElementById('result').style.display = 'none';
+// Secondo step dopo il login
+async function showSecondStep() {
+    await addSystemMessage("Caricamento profilo agente...");
+    await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
+    await addSystemMessage("Sistema pronto. Inserire codice file.");
     
-    // Mostra il secondo step
-    document.getElementById('secondStep').style.display = 'block';
-    
-    // Avvia l'effetto typing per il messaggio di benvenuto
-    const welcomeMessage = "| Caricamento...\n| Campione Riconosciuto. Bentornata " + playerName + ".";
-    typeText("welcomeText", welcomeMessage, 50, function() {
-        // Quando finisce il typing, mostra l'input per il codice del file
-        setTimeout(function() {
-            document.getElementById('fileCodeInputContainer').style.display = 'flex';
-            document.getElementById('fileCodeInput').focus();
-        }, 500);
+    showInput("Inserire codice file", async (fileCode) => {
+        // Aggiungi la riga con l'input dell'utente
+        addUserInputLine(fileCode);
+        hideInput();
+        
+        // Verifica il codice del file
+        await checkFileCodeBackend(fileCode);
+        
+        // Dopo la risposta, mostra di nuovo l'input per nuovi codici
+        setTimeout(() => {
+            showInput("Inserire codice file", async (newFileCode) => {
+                addUserInputLine(newFileCode);
+                hideInput();
+                await checkFileCodeBackend(newFileCode);
+                // Continua a mostrare l'input per nuovi codici
+                setTimeout(() => showInput("Inserire codice file", arguments.callee), 1000);
+            });
+        }, 1000);
     });
 }
 
-// Funzione per verificare il codice del file
-function checkFileCode() {
-    const fileCode = document.getElementById('fileCodeInput').value.trim();
-    checkFileCodeBackend(fileCode);
-}
-
-// Funzione per verificare il codice del file nel backend
+// Verifica del codice del file
 async function checkFileCodeBackend(fileCode) {
-    const fileResultDiv = document.getElementById('fileResult');
-    
     try {
+        await addSystemMessage("Verifica codice file in corso...");
+        
         const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -126,34 +179,14 @@ async function checkFileCodeBackend(fileCode) {
         const data = await response.json();
         
         if (data.valid) {
-            fileResultDiv.innerHTML = data.message;
-            fileResultDiv.style.borderColor = "#00ff00";
+            await addSystemMessage("Codice file verificato. Accesso ai dati consentito.");
+            await addSystemMessage("=== INIZIO TRANSMISSIONE ===", false);
+            await addSystemMessage(data.message, false);
+            await addSystemMessage("=== FINE TRANSMISSIONE ===", false);
         } else {
-            fileResultDiv.innerHTML = "Codice file non valido. Verificare e riprovare.";
-            fileResultDiv.style.borderColor = "#ff0000";
+            await addSystemMessage("ERRORE: Codice file non valido.", false);
         }
-        
-        fileResultDiv.style.display = 'block';
-        
-        // Pulisce l'input dopo l'invio
-        document.getElementById('fileCodeInput').value = '';
     } catch (error) {
-        console.error('Errore:', error);
-        fileResultDiv.innerHTML = "Errore di connessione al database centrale.";
-        fileResultDiv.style.display = 'block';
-        fileResultDiv.style.borderColor = "#ff0000";
+        await addSystemMessage("ERRORE: Connessione al database centrale fallita.", false);
     }
 }
-
-// Permette di inviare con Enter per entrambi gli input
-document.getElementById('playerNameInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkPlayerName();
-    }
-});
-
-document.getElementById('fileCodeInput')?.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkFileCode();
-    }
-});

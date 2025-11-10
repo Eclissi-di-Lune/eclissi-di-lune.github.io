@@ -23,38 +23,18 @@
         
         <button id="loginBtn" onclick="accedi()">Accedi</button>
         
-        <!-- Primo step: Inserimento traccia di sangue -->
+        <!-- Terminale principale -->
         <div id="terminal" class="terminal" style="display: none;">
-            <div class="typing-container">
-                <span class="prompt">|</span>
-                <span id="typingText" class="typing-text"></span>
+            <div class="terminal-output" id="terminalOutput">
+                <!-- Qui verranno aggiunti i messaggi dinamicamente -->
             </div>
             
-            <div class="input-container" id="inputContainer" style="display: none;">
+            <!-- Input corrente -->
+            <div class="input-line" id="currentInputLine" style="display: none;">
                 <span class="prompt">></span>
-                <span class="input-prefix">Inserire traccia di sangue: </span>
-                <input type="text" id="playerNameInput" autocomplete="off" autofocus>
-                <button onclick="checkPlayerName()">Invia</button>
+                <input type="text" id="currentInput" autocomplete="off" autofocus>
+                <button id="submitButton" onclick="submitInput()">Invia</button>
             </div>
-            
-            <div id="result" class="result"></div>
-        </div>
-
-        <!-- Secondo step: Dopo login successful -->
-        <div id="secondStep" class="terminal" style="display: none;">
-            <div class="typing-container">
-                <span class="prompt">></span>
-                <span id="welcomeText" class="typing-text"></span>
-            </div>
-            
-            <div class="input-container" id="fileCodeInputContainer" style="display: none;">
-                <span class="prompt">></span>
-                <span class="input-prefix">Inserisci il codice di un file: </span>
-                <input type="text" id="fileCodeInput" autocomplete="off" autofocus>
-                <button onclick="checkFileCode()">Invia</button>
-            </div>
-            
-            <div id="fileResult" class="result"></div>
         </div>
     </div>
 

@@ -134,3 +134,83 @@ button:hover {
     border-left: 3px solid #00ff00;
     background: rgba(0, 255, 0, 0.05);
 }
+
+.terminal-output {
+    margin-bottom: 20px;
+    min-height: 100px;
+}
+
+.message-line {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    font-family: 'Courier New', monospace;
+}
+
+.system-prompt {
+    color: #00ff00;
+    margin-right: 10px;
+    font-weight: bold;
+    min-width: 20px;
+}
+
+.system-message {
+    color: #00ff00;
+    flex: 1;
+}
+
+.user-input-line {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.user-prompt {
+    color: #00ff00;
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.user-input {
+    background: transparent;
+    border: none;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    outline: none;
+    flex: 1;
+}
+
+.input-line {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.input-line input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #00ff00;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1em;
+    padding: 5px;
+    margin: 0 10px;
+    outline: none;
+    flex: 1;
+    max-width: 400px;
+}
+
+.input-line button {
+    background: #003300;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 5px 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+.input-line button:hover {
+    background: #005500;
+}
