@@ -7,46 +7,37 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="terminal">
-        <!-- Prima riga: Titolo con effetto typing -->
-        <div class="line">
-            <span class="prompt">></span>
-            <span id="title" class="typing-text"></span>
+    <div class="container">
+        <h1>Terminale della Fondazione A⚡Z 0X41</h1>
+        
+        <div class="separator">-----</div>
+        
+        <p class="motto">Costringi, Comprendi, Contieni</p>
+        
+        <div class="separator">-----</div>
+        
+        <div class="status">
+            <span>Terminale della Fondazione 0X41: </span>
+            <span id="statusText">Offline</span>
         </div>
         
-        <!-- Seconda riga: Separatore -->
-        <div class="line">
-            <span class="prompt">></span>
-            <span id="separator" class="typing-text"></span>
-        </div>
+        <button id="loginBtn" onclick="accedi()">Accedi</button>
         
-        <!-- Terza riga: Motto -->
-        <div class="line">
-            <span class="prompt">></span>
-            <span id="motto" class="typing-text"></span>
+        <div id="terminal" class="terminal" style="display: none;">
+            <div class="typing-container">
+                <span class="prompt">></span>
+                <span id="typingText" class="typing-text"></span>
+            </div>
+            
+            <div class="input-container" id="inputContainer" style="display: none;">
+                <span class="prompt">></span>
+                <span class="input-prefix">Inserire dati utente: </span>
+                <input type="text" id="codeInput" autocomplete="off" autofocus>
+                <button onclick="checkCode()">Invia</button>
+            </div>
+            
+            <div id="result" class="result"></div>
         </div>
-        
-        <!-- Quarta riga: Separatore -->
-        <div class="line">
-            <span class="prompt">></span>
-            <span id="separator2" class="typing-text"></span>
-        </div>
-        
-        <!-- Quinta riga: Status -->
-        <div class="line">
-            <span class="prompt">></span>
-            <span id="status" class="typing-text"></span>
-        </div>
-        
-        <!-- Input utente (compare dopo la sequenza) -->
-        <div class="line input-line" style="display: none;" id="inputLine">
-            <span class="prompt">></span>
-            <span class="input-text">Inserire dati utente: </span>
-            <input type="text" id="codeInput" autocomplete="off" autofocus>
-        </div>
-
-        <!-- Risultato (compare dopo l'input) -->
-        <div id="result" class="result"></div>
     </div>
 
     <script src="script.js"></script>
