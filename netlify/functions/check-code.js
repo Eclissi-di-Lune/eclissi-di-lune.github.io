@@ -1,12 +1,17 @@
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+        return { 
+            statusCode: 405, 
+            body: JSON.stringify({ error: 'Method Not Allowed' }) 
+        };
     }
     
     try {
         const { code } = JSON.parse(event.body);
         
-        // Mappa dei codici validi e dei relativi messaggi
+        console.log('Codice ricevuto:', code); // Per debug
+        
+        // Mappa dei codici validi
         const codeMap = {
             "DRAGONE-ANTICO": "Il drago si risveglia quando la luna è alta. Cerca dove le ombre si allungano al tramonto.",
             "SEGRETO-PERDUTO": "La verità giace sotto lo sguardo del guardiano di pietra. Cerca il leone che non ruggisce.",
@@ -18,12 +23,19 @@ exports.handler = async (event) => {
         
         return {
             statusCode: 200,
-            body: JSON.stringify({ valid: valid, message: message })
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                valid: valid, 
+                message: message,
+                receivedCode: code // Per debug
+            })
         };
     } catch (error) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error' })
+            body: JSON.stringify({ error: 'Internal Server Error: ' + error.message })
         };
     }
-}
+};
