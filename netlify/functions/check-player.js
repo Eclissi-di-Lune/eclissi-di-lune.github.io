@@ -1,8 +1,25 @@
 exports.handler = async (event) => {
-    // Controlla che sia una richiesta POST
+    // Aggiungi questi header CORS
+    const headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+    };
+    
+    // Gestisci le richieste preflight OPTIONS
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
+    }
+    
     if (event.httpMethod !== 'POST') {
         return { 
             statusCode: 405, 
+            headers,
             body: JSON.stringify({ error: 'Method Not Allowed' }) 
         };
     }
@@ -10,25 +27,23 @@ exports.handler = async (event) => {
     try {
         const { playerName } = JSON.parse(event.body);
         
-        console.log('Nome ricevuto:', playerName); // Per debug
+        console.log('Nome ricevuto:', playerName);
         
-        // Lista dei nomi validi
         const validNames = ['Zeta', 'Beta', 'Alpha', 'Omega'];
         const valid = validNames.includes(playerName);
         
         return {
             statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers,
             body: JSON.stringify({ 
                 valid: valid,
-                receivedName: playerName // Per debug
+                receivedName: playerName
             })
         };
     } catch (error) {
         return {
             statusCode: 500,
+            headers,
             body: JSON.stringify({ error: 'Internal Server Error: ' + error.message })
         };
     }

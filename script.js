@@ -61,11 +61,9 @@ async function checkPlayerNameBackend(playerName) {
     
     try {
         // Chiamata alla Netlify Function
-        const response = await fetch('/.netlify/functions/check-player', {
+        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
         });
         
@@ -119,11 +117,9 @@ async function checkFileCodeBackend(fileCode) {
     const fileResultDiv = document.getElementById('fileResult');
     
     try {
-        const response = await fetch('/.netlify/functions/check-code', {
+        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
         });
         
