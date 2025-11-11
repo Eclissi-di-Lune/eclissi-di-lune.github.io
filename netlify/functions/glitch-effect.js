@@ -165,7 +165,7 @@ exports.handler = async (event) => {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    effect: archibug,
+                    effect: o_to_second_bug,
                     art: asciiArt,
                     closePage: true
                 })
