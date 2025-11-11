@@ -1,5 +1,16 @@
 let currentPlayerName = '';
 
+// Configurazione dinamica degli URL
+const getBaseUrl = () => {
+    // Se siamo in localhost, usa l'URL locale, altrimenti quello di produzione
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8888';
+    }
+    return 'https://terminale-az.netlify.app';
+};
+
+const API_BASE_URL = getBaseUrl();
+
 function accedi() {
     document.getElementById('statusText').textContent = 'Online';
     document.querySelector('.status').classList.add('online');
@@ -10,7 +21,7 @@ function accedi() {
 }
 
 // Funzioni per gestire il terminale
-function addSystemMessage(message, withTyping = true) {
+function addSystemMessage(message, withTyping = false) {
     const output = document.getElementById('terminalOutput');
     const messageLine = document.createElement('div');
     messageLine.className = 'message-line';
@@ -58,19 +69,26 @@ function showInput(placeholder, callback) {
     input.onkeypress = null;
     button.onclick = null;
     
+    let isSubmitting = false; // Flag per prevenire doppi invii
+    
     input.onkeypress = function(e) {
         if (e.key === 'Enter') {
             const value = input.value.trim();
-            if (value) {
+            if (value && !isSubmitting) {
+                isSubmitting = true;
                 callback(value);
+                // Previene ulteriori invii per 1 secondo
+                setTimeout(() => { isSubmitting = false; }, 1000);
             }
         }
     };
     
     button.onclick = function() {
         const value = input.value.trim();
-        if (value) {
+        if (value && !isSubmitting) {
+            isSubmitting = true;
             callback(value);
+            setTimeout(() => { isSubmitting = false; }, 1000);
         }
     };
     
@@ -103,7 +121,7 @@ function typeText(element, text, speed, callback) {
 
 // Sequenza principale del terminale
 async function startTerminalSequence() {
-    await addSystemMessage("Sistema di autenticazione avviato...");
+    await addSystemMessage("Sistema di autenticazione avviato...", true);
     await addSystemMessage("Inserire traccia di sangue.");
     
     showInput("Inserire nome di chi offre il sangue", async (playerName) => {        
@@ -124,7 +142,7 @@ async function startTerminalSequence() {
 // Funzione per verificare effetti speciali
 async function checkGlitchEffects(playerName) {
     try {
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/glitch-effect', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/glitch-effect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
@@ -150,9 +168,9 @@ async function checkGlitchEffects(playerName) {
 // Verifica del nome del giocatore
 async function checkPlayerNameBackend(playerName) {
     try {
-        await addSystemMessage("Verifica traccia di sangue in corso...");
+        await addSystemMessage("Verifica traccia di sangue in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
@@ -169,20 +187,20 @@ async function checkPlayerNameBackend(playerName) {
             await addSystemMessage("Traccia di sangue verificata. Accesso consentito.");
             await showSecondStep();
         } else {
-            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.", false);
-            await addSystemMessage("Riprovare l'autenticazione...", false);
+            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
+            await addSystemMessage("Riprovare l'autenticazione...");
             // Ricomincia la sequenza
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al server centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al server centrale fallita.");
         setTimeout(startTerminalSequence, 2000);
     }
 }
 
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Caricamento profilo agente...");
+    await addSystemMessage("Analisi profilo dal campione biologico...", true);
     await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
     await addSystemMessage("Sistema pronto. Inserire codice file.");
     
@@ -207,9 +225,9 @@ function startFileInputLoop() {
 // Verifica del codice del file
 async function checkFileCodeBackend(fileCode) {
     try {
-        await addSystemMessage("Verifica codice file in corso...");
+        await addSystemMessage("Verifica codice file in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
@@ -223,14 +241,14 @@ async function checkFileCodeBackend(fileCode) {
         
         if (data.valid) {
             await addSystemMessage("Codice file verificato. Accesso ai dati consentito.");
-            await addSystemMessage("=== INIZIO TRANSMISSIONE ===", false);
-            await addSystemMessage(data.message, false);
-            await addSystemMessage("=== FINE TRANSMISSIONE ===", false);
+            await addSystemMessage("=== INIZIO TRANSMISSIONE ===");
+            await addSystemMessage(data.message, true);
+            await addSystemMessage("=== FINE TRANSMISSIONE ===");
         } else {
-            await addSystemMessage("ERRORE: Codice file non valido.", false);
+            await addSystemMessage("ERRORE: Codice file non valido.");
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al database centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al database centrale fallita.");
     }
 }
 
@@ -281,9 +299,8 @@ async function showSpecialEffect(data) {
                 setTimeout(() => {
                     document.body.innerHTML = `
                         <div style="color: red; text-align: center; margin-top: 50px; padding: 20px;">
-                            <h1>💥 SISTEMA COMPROMESSO 💥</h1>
-                            <p>Accesso negato: Rilevata contaminazione Archibald</p>
-                            <p>La pagina verrà chiusa automaticamente.</p>
+                            <h1>S I S T E M A   C O M P R O M E S S O</h1>
+                            <p>Accesso negato: Rilevata breccia di contenimento</p>
                         </div>
                     `;
                 }, 1000);
@@ -316,20 +333,3 @@ async function flickerEffect(container) {
     
     flicker();
 }
-
-// Event listeners per Enter
-document.addEventListener('DOMContentLoaded', function() {
-    // Aggiungi listener globali per Enter
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const currentInput = document.getElementById('currentInput');
-            if (currentInput && currentInput.style.display !== 'none') {
-                const value = currentInput.value.trim();
-                if (value) {
-                    // Simula il click sul bottone
-                    document.getElementById('submitButton')?.click();
-                }
-            }
-        }
-    });
-});
