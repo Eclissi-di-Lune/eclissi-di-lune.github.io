@@ -12,6 +12,7 @@ const getBaseUrl = () => {
 const API_BASE_URL = getBaseUrl();
 
 function accedi() {
+    playLoginSound();
     document.getElementById('statusText').textContent = 'Online';
     document.querySelector('.status').classList.add('online');
     document.getElementById('loginBtn').style.display = 'none';
@@ -109,13 +110,14 @@ function typeText(element, text, speed, callback) {
         if (i < text.length) {
             element.textContent += text.charAt(i);
             i++;
+            // Suono di typing ogni 3 caratteri (più soft)
+            if (i % 3 === 0) playSound('typingSound', 0.1);
             setTimeout(type, speed);
         } else if (callback) {
             element.style.borderRight = 'none';
             callback();
         }
     }
-    
     type();
 }
 
@@ -332,4 +334,66 @@ async function flickerEffect(container) {
     }
     
     flicker();
+}
+
+function playSound(soundId, volume = 0.3) {
+    const sound = document.getElementById(soundId);
+    if (sound) {
+        sound.volume = volume;
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log('Audio non riproducibile:', e));
+    }
+}
+
+function playLoginSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+        
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const oscillator3 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        oscillator3.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator1.frequency.setValueAtTime(400, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(200, now + 0.8);
+        
+        oscillator2.frequency.setValueAtTime(300, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(600, now + 0.5);
+        
+        oscillator3.frequency.setValueAtTime(800, now);
+        oscillator3.frequency.setValueAtTime(1200, now + 0.3);
+        oscillator3.frequency.exponentialRampToValueAtTime(400, now + 0.6);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'triangle';
+        oscillator3.type = 'square';
+        
+        // 🔽 MODIFICA QUESTI VALORI PER RIDURRE IL VOLUME 🔽
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1);  // Era 0.4
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1); // Era 0.3
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1); // Era 0.35
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+        // 🔼 VALORI PIÙ BASSI = VOLUME PIÙ BASSO 🔼
+        
+        oscillator1.start(now);
+        oscillator2.start(now);
+        oscillator3.start(now);
+        oscillator1.stop(now + 1.0);
+        oscillator2.stop(now + 1.0);
+        oscillator3.stop(now + 1.0);
+        
+    } catch (error) {
+        console.log('Audio non supportato:', error);
+        // 🔽 RIDUCI ANCHE QUI I VOLUMI 🔽
+        createBeepSound(400, 100, 0.1);  // Era 0.3
+        setTimeout(() => createBeepSound(600, 150, 0.12), 120); // Era 0.25
+        setTimeout(() => createBeepSound(300, 200, 0.1), 300);  // Era 0.2
+    }
 }

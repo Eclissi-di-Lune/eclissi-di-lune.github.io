@@ -1,37 +1,39 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminale Fondazione 0X41</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="crt-effect">
     <!-- Scanline in movimento -->
     <div class="scanline"></div>
 
     <div class="container">
         <h1>Terminale della Fondazione A<span class="lightning">⚡</span>Z 0X41</h1>
-        
+
         <div class="separator">-----</div>
-        
+
         <p class="motto">Costringi, Comprendi, Contieni</p>
-        
+
         <div class="separator">-----</div>
-        
+
         <div class="status">
             <span>Terminale della Fondazione 0X41: </span>
             <span id="statusText">Offline</span>
         </div>
-        
+
         <button id="loginBtn" onclick="accedi()">Accedi</button>
-        
+
         <!-- Terminale principale -->
         <div id="terminal" class="terminal" style="display: none;">
             <div class="terminal-output" id="terminalOutput">
                 <!-- Qui verranno aggiunti i messaggi dinamicamente -->
             </div>
-            
+
             <!-- Input corrente -->
             <div class="input-line" id="currentInputLine" style="display: none;">
                 <span class="prompt">></span>
@@ -42,5 +44,18 @@
     </div>
 
     <script src="script.js"></script>
+
+    <audio id="typingSound" preload="auto" volume="0.1">
+        <source
+            src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+Nz/LQeSYFEIHY+9aACgEGjOf757QbAAuT7P3prg8AB5jw/++0DgAInfT/87UMAAmh9f/1swsACqP2//ayCgALpff/97EJAAyn+P/4sAgADaj5//ivBwAOqfr/+a4GAA+q+//6rgUAEKv8//qtBAAQrP3/+qwEABGt/f/6rAMAEa7+//qrAgASr/7/+qoBABKw///6qQAA"
+            type="audio/wav">
+    </audio>
+
+    <audio id="loginSound" preload="auto">
+        <source
+            src="data:audio/wav;base64,UklGRtgGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YdQGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+Nz/LQeSYFEIHY+9aACgEGjOf757QbAAuT7P3prg8AB5jw/++0DgAInfT/87UMAAmh9f/1swsACqP2//ayCgALpff/97EJAAyn+P/4sAgADaj5//ivBwAOqfr/+a4GAA+q+//6rgUAEKv8//qtBAAQrP3/+qwEABGt/f/6rAMAEa7+//qrAgASr/7/+qoBABKw///6qQAAE7H///qoAAAUssAA+qcAABWzwAD6pgAAF7TAAfqlAAAYtcAC+qQAABm2wAP6owAAGrfABPqiAAAbuMAF+qEAABy5wAb6oAAAHbrAB/qfAAAeu8AI+p4AAB+8wAn6nQAAIL3ACvqcAAAhvsAL+psAACLAwAz6mgAAI8HADfqZAAAkwsAO+pgAACXDwA/6lwAAJsTAEPqWAAAnxcAR+pUAACjGwBL6lAAAKcfAE/qTAAAqyMAU+pIAACvJwBX6kQAA"
+            type="audio/wav">
+    </audio>
 </body>
+
 </html>
