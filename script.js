@@ -106,7 +106,7 @@ async function startTerminalSequence() {
     await addSystemMessage("Sistema di autenticazione avviato...");
     await addSystemMessage("Inserire traccia di sangue.");
     
-    showInput("Inserire nome agente", async (playerName) => {        
+    showInput("Inserire nome di chi offre il sangue", async (playerName) => {        
         // Aggiungi la riga con l'input dell'utente
         addUserInputLine(playerName);
         hideInput();
