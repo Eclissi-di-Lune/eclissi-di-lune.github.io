@@ -131,7 +131,8 @@ exports.handler = async (event) => {
                                                                   ::.                                                           
                                                                   ::                                                            
                                                                   :.                                                            
-                                                                   :                                                                                                                                                                                                     
+                                                                   :    
+                                                                                                                                                                                                                                              
         `;
     
         const o_to_second_bug = `

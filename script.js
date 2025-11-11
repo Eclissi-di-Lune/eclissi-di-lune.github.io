@@ -58,19 +58,26 @@ function showInput(placeholder, callback) {
     input.onkeypress = null;
     button.onclick = null;
     
+    let isSubmitting = false; // Flag per prevenire doppi invii
+    
     input.onkeypress = function(e) {
         if (e.key === 'Enter') {
             const value = input.value.trim();
-            if (value) {
+            if (value && !isSubmitting) {
+                isSubmitting = true;
                 callback(value);
+                // Previene ulteriori invii per 1 secondo
+                setTimeout(() => { isSubmitting = false; }, 1000);
             }
         }
     };
     
     button.onclick = function() {
         const value = input.value.trim();
-        if (value) {
+        if (value && !isSubmitting) {
+            isSubmitting = true;
             callback(value);
+            setTimeout(() => { isSubmitting = false; }, 1000);
         }
     };
     
@@ -169,13 +176,13 @@ async function checkPlayerNameBackend(playerName) {
             await addSystemMessage("Traccia di sangue verificata. Accesso consentito.");
             await showSecondStep();
         } else {
-            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.", false);
-            await addSystemMessage("Riprovare l'autenticazione...", false);
+            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
+            await addSystemMessage("Riprovare l'autenticazione...");
             // Ricomincia la sequenza
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al server centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al server centrale fallita.");
         setTimeout(startTerminalSequence, 2000);
     }
 }
@@ -224,13 +231,13 @@ async function checkFileCodeBackend(fileCode) {
         if (data.valid) {
             await addSystemMessage("Codice file verificato. Accesso ai dati consentito.");
             await addSystemMessage("=== INIZIO TRANSMISSIONE ===", false);
-            await addSystemMessage(data.message, false);
+            await addSystemMessage(data.message);
             await addSystemMessage("=== FINE TRANSMISSIONE ===", false);
         } else {
             await addSystemMessage("ERRORE: Codice file non valido.", false);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al database centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al database centrale fallita.");
     }
 }
 
@@ -281,9 +288,8 @@ async function showSpecialEffect(data) {
                 setTimeout(() => {
                     document.body.innerHTML = `
                         <div style="color: red; text-align: center; margin-top: 50px; padding: 20px;">
-                            <h1>💥 SISTEMA COMPROMESSO 💥</h1>
-                            <p>Accesso negato: Rilevata contaminazione Archibald</p>
-                            <p>La pagina verrà chiusa automaticamente.</p>
+                            <h1>S I S T E M A   C O M P R O M E S S O</h1>
+                            <p>Accesso negato: Rilevata breccia di contenimento</p>
                         </div>
                     `;
                 }, 1000);
@@ -316,20 +322,3 @@ async function flickerEffect(container) {
     
     flicker();
 }
-
-// Event listeners per Enter
-document.addEventListener('DOMContentLoaded', function() {
-    // Aggiungi listener globali per Enter
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const currentInput = document.getElementById('currentInput');
-            if (currentInput && currentInput.style.display !== 'none') {
-                const value = currentInput.value.trim();
-                if (value) {
-                    // Simula il click sul bottone
-                    document.getElementById('submitButton')?.click();
-                }
-            }
-        }
-    });
-});
