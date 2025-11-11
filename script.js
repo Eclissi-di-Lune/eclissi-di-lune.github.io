@@ -10,7 +10,7 @@ function accedi() {
 }
 
 // Funzioni per gestire il terminale
-function addSystemMessage(message, withTyping = true) {
+function addSystemMessage(message, withTyping = false) {
     const output = document.getElementById('terminalOutput');
     const messageLine = document.createElement('div');
     messageLine.className = 'message-line';
@@ -110,7 +110,7 @@ function typeText(element, text, speed, callback) {
 
 // Sequenza principale del terminale
 async function startTerminalSequence() {
-    await addSystemMessage("Sistema di autenticazione avviato...");
+    await addSystemMessage("Sistema di autenticazione avviato...", true);
     await addSystemMessage("Inserire traccia di sangue.");
     
     showInput("Inserire nome di chi offre il sangue", async (playerName) => {        
@@ -157,7 +157,7 @@ async function checkGlitchEffects(playerName) {
 // Verifica del nome del giocatore
 async function checkPlayerNameBackend(playerName) {
     try {
-        await addSystemMessage("Verifica traccia di sangue in corso...");
+        await addSystemMessage("Verifica traccia di sangue in corso...", true);
         
         const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
             method: 'POST',
@@ -189,7 +189,7 @@ async function checkPlayerNameBackend(playerName) {
 
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Caricamento profilo agente...");
+    await addSystemMessage("Analisi profilo dal campione biologico...", true);
     await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
     await addSystemMessage("Sistema pronto. Inserire codice file.");
     
@@ -214,7 +214,7 @@ function startFileInputLoop() {
 // Verifica del codice del file
 async function checkFileCodeBackend(fileCode) {
     try {
-        await addSystemMessage("Verifica codice file in corso...");
+        await addSystemMessage("Verifica codice file in corso...", true);
         
         const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
             method: 'POST',
@@ -230,11 +230,11 @@ async function checkFileCodeBackend(fileCode) {
         
         if (data.valid) {
             await addSystemMessage("Codice file verificato. Accesso ai dati consentito.");
-            await addSystemMessage("=== INIZIO TRANSMISSIONE ===", false);
-            await addSystemMessage(data.message);
-            await addSystemMessage("=== FINE TRANSMISSIONE ===", false);
+            await addSystemMessage("=== INIZIO TRANSMISSIONE ===");
+            await addSystemMessage(data.message, true);
+            await addSystemMessage("=== FINE TRANSMISSIONE ===");
         } else {
-            await addSystemMessage("ERRORE: Codice file non valido.", false);
+            await addSystemMessage("ERRORE: Codice file non valido.");
         }
     } catch (error) {
         await addSystemMessage("ERRORE: Connessione al database centrale fallita.");
