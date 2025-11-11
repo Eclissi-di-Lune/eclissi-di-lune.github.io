@@ -6,7 +6,26 @@ exports.handler = async (event) => {
         'Content-Type': 'application/json',
     };
 
-    const archibug = `                                                                   
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
+    }
+    
+    if (event.httpMethod !== 'POST') {
+        return { 
+            statusCode: 405, 
+            headers,
+            body: JSON.stringify({ error: 'Method Not Allowed' }) 
+        };
+    }
+    
+    try {
+        const { playerName } = JSON.parse(event.body);
+
+            const archibug = `                                                                   
                                                                                               .                                 
                                                                                              ::..                               
                                      .:.                                                     .:::.                              
@@ -108,7 +127,7 @@ exports.handler = async (event) => {
                                                                   ::                                                            
                                                                   :.                                                            
                                                                   .                                                                                                                                                   
-    `
+    `;
     
     const o_to_second_bug = `
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -136,26 +155,7 @@ exports.handler = async (event) => {
                     S Y S T E M   F A I L U R E
             UNAUTHORIZED ACCESS: ARCHIBALD DETECTED
             CONTAINMENT BREACH IMMINENT
-            `
-
-    if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers,
-            body: ''
-        };
-    }
-    
-    if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            headers,
-            body: JSON.stringify({ error: 'Method Not Allowed' }) 
-        };
-    }
-    
-    try {
-        const { playerName } = JSON.parse(event.body);
+            `;
         
         console.log('Checking glitch effect for:', playerName);
         
@@ -165,7 +165,7 @@ exports.handler = async (event) => {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    effect: o_to_second_bug,
+                    effect: archibug,
                     art: asciiArt,
                     closePage: true
                 })
