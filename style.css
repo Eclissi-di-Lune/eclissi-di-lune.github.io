@@ -4,22 +4,31 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     background-color: #000000;
     color: #00ff00;
     font-family: 'Courier New', monospace;
-    height: 100vh;
+    height: 100%;
+    /* RIMUOVI overflow: hidden da qui */
+}
+
+body {
+    padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding: 20px;
+    align-items: flex-start;
+    min-height: 100vh; /* Permette al body di crescere se necessario */
 }
 
 .container {
     text-align: center;
     max-width: 800px;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    /* RIMUOVI height: 100vh */
 }
+
 
 h1 {
     font-size: 2.5em;
@@ -60,84 +69,42 @@ h1 {
     color: #00ff00;
 }
 
-button {
+#loginBtn {
     background: #003300;
     color: #00ff00;
     border: 1px solid #00ff00;
-    padding: 10px 20px;
+    padding: 8px 20px;
     font-family: 'Courier New', monospace;
-    font-size: 1.1em;
+    font-size: 1em;
     cursor: pointer;
-    margin: 20px 0;
+    margin: 15px auto;
+    display: block;
+    width: auto;
+    min-width: 120px;
+    max-width: 200px;
 }
 
-button:hover {
+#loginBtn:hover {
     background: #005500;
 }
 
 .terminal {
     margin-top: 30px;
     text-align: left;
-}
-
-.typing-container {
+    flex-grow: 1;
     display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.prompt {
-    color: #00ff00;
-    margin-right: 10px;
-    font-weight: bold;
-}
-
-.typing-text {
-    font-size: 1.2em;
-    border-right: 2px solid #00ff00;
-    animation: blink 1s infinite;
-    white-space: pre-line;
-}
-
-@keyframes blink {
-    0%, 50% { border-color: #00ff00; }
-    51%, 100% { border-color: transparent; }
-}
-
-.input-container {
-    display: flex;
-    align-items: center;
-    margin-top: 20px;
-}
-
-.input-prefix {
-    margin-right: 10px;
-}
-
-#playerNameInput, #fileCodeInput {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #00ff00;
-    color: #00ff00;
-    font-family: 'Courier New', monospace;
-    font-size: 1.1em;
-    padding: 5px;
-    margin-right: 10px;
-    outline: none;
-    flex: 1;
-    max-width: 300px;
-}
-
-.result {
-    margin-top: 20px;
-    padding: 15px;
-    border-left: 3px solid #00ff00;
-    background: rgba(0, 255, 0, 0.05);
+    flex-direction: column;
+    min-height: 400px; /* Altezza minima decente */
+    max-height: 70vh; /* Altezza massima */
 }
 
 .terminal-output {
-    margin-bottom: 20px;
-    min-height: 100px;
+    flex-grow: 1;
+    overflow-y: auto; /* 👈 Scroll solo qui */
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    margin-bottom: 10px;
+    max-height: calc(70vh - 100px); /* Spazio per l'input */
 }
 
 .message-line {
@@ -150,7 +117,6 @@ button:hover {
 .system-prompt {
     color: #00ff00;
     margin-right: 10px;
-    margin-left: 10px;
     font-weight: bold;
     min-width: 20px;
 }
@@ -159,7 +125,8 @@ button:hover {
     color: #00ff00;
     flex: 1;
     margin-right: 10px;
-    margin-left: 10px;
+    white-space: pre-line;
+    word-wrap: break-word;
 }
 
 .user-input-line {
@@ -188,6 +155,8 @@ button:hover {
     display: flex;
     align-items: center;
     margin-top: 10px;
+    padding: 10px 0;
+    background: rgba(0, 0, 0, 0.9);
 }
 
 .input-line input {
@@ -212,8 +181,40 @@ button:hover {
     font-family: 'Courier New', monospace;
     font-size: 1em;
     cursor: pointer;
+    margin: 0;
+    width: auto;
 }
 
 .input-line button:hover {
+    background: #005500;
+}
+
+.typing-text {
+    font-size: 1.2em;
+    border-right: 2px solid #00ff00;
+    animation: blink 1s infinite;
+    white-space: pre-line;
+}
+
+@keyframes blink {
+    0%, 50% { border-color: #00ff00; }
+    51%, 100% { border-color: transparent; }
+}
+
+/* Scrollbar personalizzata per il terminale */
+.terminal-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.terminal-output::-webkit-scrollbar-track {
+    background: #001100;
+}
+
+.terminal-output::-webkit-scrollbar-thumb {
+    background: #003300;
+    border-radius: 4px;
+}
+
+.terminal-output::-webkit-scrollbar-thumb:hover {
     background: #005500;
 }

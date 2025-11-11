@@ -1,5 +1,16 @@
 let currentPlayerName = '';
 
+// Configurazione dinamica degli URL
+const getBaseUrl = () => {
+    // Se siamo in localhost, usa l'URL locale, altrimenti quello di produzione
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8888';
+    }
+    return 'https://terminale-az.netlify.app';
+};
+
+const API_BASE_URL = getBaseUrl();
+
 function accedi() {
     document.getElementById('statusText').textContent = 'Online';
     document.querySelector('.status').classList.add('online');
@@ -131,7 +142,7 @@ async function startTerminalSequence() {
 // Funzione per verificare effetti speciali
 async function checkGlitchEffects(playerName) {
     try {
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/glitch-effect', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/glitch-effect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
@@ -159,7 +170,7 @@ async function checkPlayerNameBackend(playerName) {
     try {
         await addSystemMessage("Verifica traccia di sangue in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
@@ -216,7 +227,7 @@ async function checkFileCodeBackend(fileCode) {
     try {
         await addSystemMessage("Verifica codice file in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
