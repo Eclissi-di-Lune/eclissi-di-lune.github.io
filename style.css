@@ -150,6 +150,7 @@ button:hover {
 .system-prompt {
     color: #00ff00;
     margin-right: 10px;
+    margin-left: 10px;
     font-weight: bold;
     min-width: 20px;
 }
@@ -157,6 +158,8 @@ button:hover {
 .system-message {
     color: #00ff00;
     flex: 1;
+    margin-right: 10px;
+    margin-left: 10px;
 }
 
 .user-input-line {
