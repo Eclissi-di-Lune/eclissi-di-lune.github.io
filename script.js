@@ -2,7 +2,6 @@ let currentPlayerName = '';
 
 // Configurazione dinamica degli URL
 const getBaseUrl = () => {
-    // Se siamo in localhost, usa l'URL locale, altrimenti quello di produzione
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         return 'http://localhost:8888';
     }
@@ -66,11 +65,10 @@ function showInput(placeholder, callback) {
     input.placeholder = placeholder;
     input.value = '';
     
-    // Rimuovi i listener precedenti per evitare duplicati
     input.onkeypress = null;
     button.onclick = null;
     
-    let isSubmitting = false; // Flag per prevenire doppi invii
+    let isSubmitting = false;
     
     input.onkeypress = function(e) {
         if (e.key === 'Enter') {
@@ -78,7 +76,6 @@ function showInput(placeholder, callback) {
             if (value && !isSubmitting) {
                 isSubmitting = true;
                 callback(value);
-                // Previene ulteriori invii per 1 secondo
                 setTimeout(() => { isSubmitting = false; }, 1000);
             }
         }
@@ -121,50 +118,22 @@ function typeText(element, text, speed, callback) {
     type();
 }
 
+
 // Sequenza principale del terminale
 async function startTerminalSequence() {
     await addSystemMessage("Sistema di autenticazione avviato...", true);
     await addSystemMessage("Inserire traccia di sangue.");
     
     showInput("Inserire nome di chi offre il sangue", async (playerName) => {        
-        // Aggiungi la riga con l'input dell'utente
         addUserInputLine(playerName);
         hideInput();
         
-        // Prima verifica gli effetti speciali
         const hasSpecialEffect = await checkGlitchEffects(playerName);
         
-        // Se non c'è effetto speciale, procedi con la verifica normale
         if (!hasSpecialEffect) {
             await checkPlayerNameBackend(playerName);
         }
     });
-}
-
-// Funzione per verificare effetti speciali
-async function checkGlitchEffects(playerName) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/.netlify/functions/glitch-effect`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName }),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.effect && data.effect !== 'none') {
-            await showSpecialEffect(data);
-            return true; // Indica che c'è stato un effetto speciale
-        }
-        return false;
-    } catch (error) {
-        console.error('Errore effetti speciali:', error);
-        return false;
-    }
 }
 
 // Verifica del nome del giocatore
@@ -186,24 +155,71 @@ async function checkPlayerNameBackend(playerName) {
         
         if (data.valid) {
             currentPlayerName = playerName;
-            await addSystemMessage("Traccia di sangue verificata. Accesso consentito.");
-            await showSecondStep();
+            await addSystemMessage("Traccia di sangue verificata. Autenticazione valida.");
+            // Ora procedi con il passcode
+            await startPasscodeSequence();
         } else {
             await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
-            await addSystemMessage("Riprovare l'autenticazione...");
-            // Ricomincia la sequenza
+            await addSystemMessage("Fornire una nuova traccia di sangue...");
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al server centrale fallita.");
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
         setTimeout(startTerminalSequence, 2000);
+    }
+}
+
+// Nuova sequenza per il passcode
+async function startPasscodeSequence() {
+    await addSystemMessage("Inserire un codice d'accesso valido.");
+    
+    showInput("Inserire codice d'accesso", async (passcode) => {        
+        addUserInputLine(passcode);
+        hideInput();
+        
+        const hasSpecialEffect = await checkGlitchEffects(passcode);
+        
+        if (!hasSpecialEffect) {
+            await checkPasscodeBackend(passcode);
+        }
+    });
+}
+
+// Verifica del passcode
+async function checkPasscodeBackend(passcode) {
+    try {
+        await addSystemMessage("Verifica del codice d'accesso...", true);
+        
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passcode: passcode }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            await addSystemMessage("Codice d'accesso convalidato. Accesso consentito.");
+            await showSecondStep();
+        } else {
+            await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
+            await addSystemMessage("Riprovare l'autenticazione...");
+            setTimeout(startPasscodeSequence, 2000);
+        }
+    } catch (error) {
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+        setTimeout(startPasscodeSequence, 2000);
     }
 }
 
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Analisi profilo dal campione biologico...", true);
-    await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
+    await addSystemMessage("Analisi profilo dal campione biologico in relazione al codice...", true);
+    await addSystemMessage(`Campione e codice compatibili. Bentornata, ${currentPlayerName}.`);
     await addSystemMessage("Sistema pronto. Inserire codice file.");
     
     startFileInputLoop();
@@ -212,14 +228,11 @@ async function showSecondStep() {
 // Loop per input file
 function startFileInputLoop() {
     showInput("Inserire codice file", async (fileCode) => {
-        // Aggiungi la riga con l'input dell'utente
         addUserInputLine(fileCode);
         hideInput();
         
-        // Verifica il codice del file
         await checkFileCodeBackend(fileCode);
         
-        // Continua il loop
         startFileInputLoop();
     });
 }
@@ -250,7 +263,33 @@ async function checkFileCodeBackend(fileCode) {
             await addSystemMessage("ERRORE: Codice file non valido.");
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al database centrale fallita.");
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+    }
+}
+
+// Funzione per verificare effetti speciali
+async function checkGlitchEffects(playerName) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/glitch-effect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.effect && data.effect !== 'none') {
+            await showSpecialEffect(data);
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Errore effetti speciali:', error);
+        return false;
     }
 }
 
