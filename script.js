@@ -1,6 +1,17 @@
 let currentPlayerName = '';
 
+// Configurazione dinamica degli URL
+const getBaseUrl = () => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8888';
+    }
+    return 'https://terminale-az.netlify.app';
+};
+
+const API_BASE_URL = getBaseUrl();
+
 function accedi() {
+    playLoginSound();
     document.getElementById('statusText').textContent = 'Online';
     document.querySelector('.status').classList.add('online');
     document.getElementById('loginBtn').style.display = 'none';
@@ -10,7 +21,7 @@ function accedi() {
 }
 
 // Funzioni per gestire il terminale
-function addSystemMessage(message, withTyping = true) {
+function addSystemMessage(message, withTyping = false) {
     const output = document.getElementById('terminalOutput');
     const messageLine = document.createElement('div');
     messageLine.className = 'message-line';
@@ -54,23 +65,28 @@ function showInput(placeholder, callback) {
     input.placeholder = placeholder;
     input.value = '';
     
-    // Rimuovi i listener precedenti per evitare duplicati
     input.onkeypress = null;
     button.onclick = null;
+    
+    let isSubmitting = false;
     
     input.onkeypress = function(e) {
         if (e.key === 'Enter') {
             const value = input.value.trim();
-            if (value) {
+            if (value && !isSubmitting) {
+                isSubmitting = true;
                 callback(value);
+                setTimeout(() => { isSubmitting = false; }, 1000);
             }
         }
     };
     
     button.onclick = function() {
         const value = input.value.trim();
-        if (value) {
+        if (value && !isSubmitting) {
+            isSubmitting = true;
             callback(value);
+            setTimeout(() => { isSubmitting = false; }, 1000);
         }
     };
     
@@ -91,68 +107,41 @@ function typeText(element, text, speed, callback) {
         if (i < text.length) {
             element.textContent += text.charAt(i);
             i++;
+            // Suono di typing ogni 3 caratteri (più soft)
+            if (i % 3 === 0) playSound('typingSound', 0.1);
             setTimeout(type, speed);
         } else if (callback) {
             element.style.borderRight = 'none';
             callback();
         }
     }
-    
     type();
 }
 
+
 // Sequenza principale del terminale
 async function startTerminalSequence() {
-    await addSystemMessage("Sistema di autenticazione avviato...");
+    await addSystemMessage("Sistema di autenticazione avviato...", true);
     await addSystemMessage("Inserire traccia di sangue.");
     
     showInput("Inserire nome di chi offre il sangue", async (playerName) => {        
-        // Aggiungi la riga con l'input dell'utente
         addUserInputLine(playerName);
         hideInput();
         
-        // Prima verifica gli effetti speciali
         const hasSpecialEffect = await checkGlitchEffects(playerName);
         
-        // Se non c'è effetto speciale, procedi con la verifica normale
         if (!hasSpecialEffect) {
             await checkPlayerNameBackend(playerName);
         }
     });
 }
 
-// Funzione per verificare effetti speciali
-async function checkGlitchEffects(playerName) {
-    try {
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/glitch-effect', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName }),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.effect && data.effect !== 'none') {
-            await showSpecialEffect(data);
-            return true; // Indica che c'è stato un effetto speciale
-        }
-        return false;
-    } catch (error) {
-        console.error('Errore effetti speciali:', error);
-        return false;
-    }
-}
-
 // Verifica del nome del giocatore
 async function checkPlayerNameBackend(playerName) {
     try {
-        await addSystemMessage("Verifica traccia di sangue in corso...");
+        await addSystemMessage("Verifica traccia di sangue in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-player', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: playerName }),
@@ -166,24 +155,71 @@ async function checkPlayerNameBackend(playerName) {
         
         if (data.valid) {
             currentPlayerName = playerName;
-            await addSystemMessage("Traccia di sangue verificata. Accesso consentito.");
-            await showSecondStep();
+            await addSystemMessage("Traccia di sangue verificata. Autenticazione valida.");
+            // Ora procedi con il passcode
+            await startPasscodeSequence();
         } else {
-            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.", false);
-            await addSystemMessage("Riprovare l'autenticazione...", false);
-            // Ricomincia la sequenza
+            await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
+            await addSystemMessage("Fornire una nuova traccia di sangue...");
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al server centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
         setTimeout(startTerminalSequence, 2000);
+    }
+}
+
+// Nuova sequenza per il passcode
+async function startPasscodeSequence() {
+    await addSystemMessage("Inserire un codice d'accesso valido.");
+    
+    showInput("Inserire codice d'accesso", async (passcode) => {        
+        addUserInputLine(passcode);
+        hideInput();
+        
+        const hasSpecialEffect = await checkGlitchEffects(passcode);
+        
+        if (!hasSpecialEffect) {
+            await checkPasscodeBackend(passcode);
+        }
+    });
+}
+
+// Verifica del passcode
+async function checkPasscodeBackend(passcode) {
+    try {
+        await addSystemMessage("Verifica del codice d'accesso...", true);
+        
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passcode: passcode }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            await addSystemMessage("Codice d'accesso convalidato. Accesso consentito.");
+            await showSecondStep();
+        } else {
+            await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
+            await addSystemMessage("Riprovare l'autenticazione...");
+            setTimeout(startPasscodeSequence, 2000);
+        }
+    } catch (error) {
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+        setTimeout(startPasscodeSequence, 2000);
     }
 }
 
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Caricamento profilo agente...");
-    await addSystemMessage(`Campione riconosciuto. Bentornata, ${currentPlayerName}.`);
+    await addSystemMessage("Analisi profilo dal campione biologico in relazione al codice...", true);
+    await addSystemMessage(`Campione e codice compatibili. Bentornata, ${currentPlayerName}.`);
     await addSystemMessage("Sistema pronto. Inserire codice file.");
     
     startFileInputLoop();
@@ -192,14 +228,11 @@ async function showSecondStep() {
 // Loop per input file
 function startFileInputLoop() {
     showInput("Inserire codice file", async (fileCode) => {
-        // Aggiungi la riga con l'input dell'utente
         addUserInputLine(fileCode);
         hideInput();
         
-        // Verifica il codice del file
         await checkFileCodeBackend(fileCode);
         
-        // Continua il loop
         startFileInputLoop();
     });
 }
@@ -207,9 +240,9 @@ function startFileInputLoop() {
 // Verifica del codice del file
 async function checkFileCodeBackend(fileCode) {
     try {
-        await addSystemMessage("Verifica codice file in corso...");
+        await addSystemMessage("Verifica codice file in corso...", true);
         
-        const response = await fetch('https://terminale-az.netlify.app/.netlify/functions/check-code', {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-code`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
@@ -223,14 +256,40 @@ async function checkFileCodeBackend(fileCode) {
         
         if (data.valid) {
             await addSystemMessage("Codice file verificato. Accesso ai dati consentito.");
-            await addSystemMessage("=== INIZIO TRANSMISSIONE ===", false);
-            await addSystemMessage(data.message, false);
-            await addSystemMessage("=== FINE TRANSMISSIONE ===", false);
+            await addSystemMessage("=== INIZIO TRANSMISSIONE ===");
+            await addSystemMessage(data.message, true);
+            await addSystemMessage("=== FINE TRANSMISSIONE ===");
         } else {
-            await addSystemMessage("ERRORE: Codice file non valido.", false);
+            await addSystemMessage("ERRORE: Codice file non valido.");
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al database centrale fallita.", false);
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+    }
+}
+
+// Funzione per verificare effetti speciali
+async function checkGlitchEffects(playerName) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/glitch-effect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName }),
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.effect && data.effect !== 'none') {
+            await showSpecialEffect(data);
+            return true;
+        }
+        return false;
+    } catch (error) {
+        console.error('Errore effetti speciali:', error);
+        return false;
     }
 }
 
@@ -281,9 +340,8 @@ async function showSpecialEffect(data) {
                 setTimeout(() => {
                     document.body.innerHTML = `
                         <div style="color: red; text-align: center; margin-top: 50px; padding: 20px;">
-                            <h1>💥 SISTEMA COMPROMESSO 💥</h1>
-                            <p>Accesso negato: Rilevata contaminazione Archibald</p>
-                            <p>La pagina verrà chiusa automaticamente.</p>
+                            <h1>S I S T E M A   C O M P R O M E S S O</h1>
+                            <p>Accesso negato: Rilevata breccia di contenimento</p>
                         </div>
                     `;
                 }, 1000);
@@ -317,19 +375,64 @@ async function flickerEffect(container) {
     flicker();
 }
 
-// Event listeners per Enter
-document.addEventListener('DOMContentLoaded', function() {
-    // Aggiungi listener globali per Enter
-    document.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const currentInput = document.getElementById('currentInput');
-            if (currentInput && currentInput.style.display !== 'none') {
-                const value = currentInput.value.trim();
-                if (value) {
-                    // Simula il click sul bottone
-                    document.getElementById('submitButton')?.click();
-                }
-            }
-        }
-    });
-});
+function playSound(soundId, volume = 0.3) {
+    const sound = document.getElementById(soundId);
+    if (sound) {
+        sound.volume = volume;
+        sound.currentTime = 0;
+        sound.play().catch(e => console.log('Audio non riproducibile:', e));
+    }
+}
+
+function playLoginSound() {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioContext.currentTime;
+        
+        const oscillator1 = audioContext.createOscillator();
+        const oscillator2 = audioContext.createOscillator();
+        const oscillator3 = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        oscillator3.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator1.frequency.setValueAtTime(400, now);
+        oscillator1.frequency.exponentialRampToValueAtTime(200, now + 0.8);
+        
+        oscillator2.frequency.setValueAtTime(300, now);
+        oscillator2.frequency.exponentialRampToValueAtTime(600, now + 0.5);
+        
+        oscillator3.frequency.setValueAtTime(800, now);
+        oscillator3.frequency.setValueAtTime(1200, now + 0.3);
+        oscillator3.frequency.exponentialRampToValueAtTime(400, now + 0.6);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'triangle';
+        oscillator3.type = 'square';
+        
+        // 🔽 MODIFICA QUESTI VALORI PER RIDURRE IL VOLUME 🔽
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1);  // Era 0.4
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1); // Era 0.3
+        gainNode.gain.linearRampToValueAtTime(0.03, now + 0.1); // Era 0.35
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+        // 🔼 VALORI PIÙ BASSI = VOLUME PIÙ BASSO 🔼
+        
+        oscillator1.start(now);
+        oscillator2.start(now);
+        oscillator3.start(now);
+        oscillator1.stop(now + 1.0);
+        oscillator2.stop(now + 1.0);
+        oscillator3.stop(now + 1.0);
+        
+    } catch (error) {
+        console.log('Audio non supportato:', error);
+        // 🔽 RIDUCI ANCHE QUI I VOLUMI 🔽
+        createBeepSound(400, 100, 0.1);  // Era 0.3
+        setTimeout(() => createBeepSound(600, 150, 0.12), 120); // Era 0.25
+        setTimeout(() => createBeepSound(300, 200, 0.1), 300);  // Era 0.2
+    }
+}
