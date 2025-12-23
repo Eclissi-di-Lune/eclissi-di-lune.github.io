@@ -29,8 +29,12 @@ exports.handler = async (event) => {
         
         console.log('Nome ricevuto:', playerName);
         
-        const validNames = ['Zeta', 'Beta', 'Alpha', 'Omega'];
-        const valid = validNames.includes(playerName);
+        const validNames = ['zeta'];
+        
+        const playerNameLowerCase = playerName ? playerName.toLowerCase() : '';
+        const valid = validNames.some(validName => 
+            validName.toLowerCase() === playerNameLowerCase
+        );
         
         return {
             statusCode: 200,
