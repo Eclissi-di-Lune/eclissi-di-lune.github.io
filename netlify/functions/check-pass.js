@@ -1,50 +1,47 @@
 exports.handler = async (event) => {
-    // Aggiungi questi header CORS
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json',
     };
-    
-    // Gestisci le richieste preflight OPTIONS
-    if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers,
-            body: ''
-        };
-    }
-    
-    if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            headers,
-            body: JSON.stringify({ error: 'Method Not Allowed' }) 
-        };
-    }
-    
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+
     try {
-        const { passcode } = JSON.parse(event.body);
-        
-        console.log('Password ricevuta:', passcode);
-        
-        const validPass = ['gw76x8gn3278382h'];
-        const valid = validPass.includes(passcode);
-        
+        const { passcode } = JSON.parse(event.body || '{}');
+        const raw = passcode ? passcode.toString() : '';
+
+        const normalized = raw.normalize ? raw.normalize('NFKC') : raw;
+        const stripped = normalized.replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
+
+        const validPass = ['5676apaleredmoonandabeatensun364'];
+        const validPassStripped = validPass.map(p => (p.normalize ? p.normalize('NFKC') : p).replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, ''));
+
+        console.log('check-pass raw:', JSON.stringify(raw));
+        console.log('normalized:', JSON.stringify(normalized));
+        console.log('stripped:', JSON.stringify(stripped));
+        console.log('validPassStripped:', JSON.stringify(validPassStripped));
+
+        const valid = validPassStripped.includes(stripped);
+
+        const charCodes = Array.from(stripped).slice(0,100).map(c => c.charCodeAt(0));
+
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
-                valid: valid,
-                receivedPasscode: passcode
+            body: JSON.stringify({
+                valid,
+                receivedPasscode: raw,
+                lengthReceived: raw.length,
+                lengthStripped: stripped.length,
+                stripped,
+                charCodes,
+                message: valid ? 'Passcode valido' : 'Passcode non valido'
             })
         };
-    } catch (error) {
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Internal Server Error: ' + error.message })
-        };
+    } catch (err) {
+        console.error('check-pass error', err);
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Server Error: ' + err.message, valid: false }) };
     }
 };

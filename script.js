@@ -140,30 +140,36 @@ async function startTerminalSequence() {
 async function checkPlayerNameBackend(playerName) {
     try {
         await addSystemMessage("Verifica traccia di sangue in corso...", true);
-        
+
+        const trimmedName = playerName ? playerName.trim() : '';
+
+        console.log('Client -> check-player: playerName =', JSON.stringify(trimmedName));
+
         const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ playerName: playerName }),
+            body: JSON.stringify({ playerName: trimmedName }),
         });
-        
+
+        const data = await response.json();
+        console.log('check-player response:', data);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
-        
+
         if (data.valid) {
-            currentPlayerName = playerName;
+            currentPlayerName = trimmedName; // impostalo client-side per l'UX
+            console.log('currentPlayerName impostato a:', JSON.stringify(currentPlayerName));
             await addSystemMessage("Traccia di sangue verificata. Autenticazione valida.");
-            // Ora procedi con il passcode
             await startPasscodeSequence();
         } else {
             await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
-            await addSystemMessage("Fornire una nuova traccia di sangue...");
+            await addSystemMessage("Fornire una nuova traccia di sangue.");
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
+        console.error('Errore checkPlayerNameBackend:', error);
         await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
         setTimeout(startTerminalSequence, 2000);
     }
@@ -185,42 +191,96 @@ async function startPasscodeSequence() {
     });
 }
 
-// Verifica del passcode
 async function checkPasscodeBackend(passcode) {
     try {
         await addSystemMessage("Verifica del codice d'accesso...", true);
-        
+
+        const trimmedPass = passcode ? passcode : '';
+        console.log('Client -> invio passcode raw:', JSON.stringify(trimmedPass));
+        console.log('Client -> lunghezza:', trimmedPass.length, 'charCodes:', Array.from(trimmedPass).slice(0,100).map(c=>c.charCodeAt(0)));
+
         const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ passcode: passcode }),
+            body: JSON.stringify({ passcode: trimmedPass }), // NOTA: non inviamo playerName
         });
-        
+
+        const data = await response.json();
+        console.log('check-pass response:', data);
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        const data = await response.json();
-        
+
         if (data.valid) {
-            await addSystemMessage("Codice d'accesso convalidato. Accesso consentito.");
-            await showSecondStep();
+            await addSystemMessage("Codice d'accesso convalidato. Verifica finale richiesta.");
+            await startSecurityQuestionSequence();
         } else {
             await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
+            if (data && data.message) {
+                await addSystemMessage(`[DEBUG] server: ${data.message}`);
+            }
             await addSystemMessage("Riprovare l'autenticazione...");
             setTimeout(startPasscodeSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+        console.error('Errore checkPasscodeBackend:', error);
+        await addSystemMessage("ERRORE: Connessione al server di sicurezza fallita.");
         setTimeout(startPasscodeSequence, 2000);
+    }
+}
+
+async function startSecurityQuestionSequence() {
+    await addSystemMessage("Ultimo livello di sicurezza attivo.", true);
+    await addSystemMessage("Domanda di verifica personale:");
+    await addSystemMessage("Quale fu il mio primo amore?", true);
+    
+    showInput("Inserire risposta", async (answer) => {        
+        addUserInputLine(answer);
+        hideInput();
+        
+        await checkSecurityAnswerBackend(answer);
+    });
+}
+
+
+async function checkSecurityAnswerBackend(answer) {
+    try {
+        await addSystemMessage("Verifica risposta personale...", true);
+        
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-security-answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                playerName: currentPlayerName,
+                answer: answer 
+            }),
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            await addSystemMessage("Risposta corretta. Accesso completo autorizzato.");
+            await showSecondStep();
+        } else {
+            await addSystemMessage("ERRORE: Risposta di sicurezza non corretta.");
+            await addSystemMessage("Tentativo fallito. Ritentare dall'inizio.");
+            setTimeout(startTerminalSequence, 2000);
+        }
+    } catch (error) {
+        await addSystemMessage("ERRORE: Connessione al server di verifica fallita.");
+        setTimeout(startSecurityQuestionSequence, 2000);
     }
 }
 
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Analisi profilo dal campione biologico in relazione al codice...", true);
-    await addSystemMessage(`Campione e codice compatibili. Bentornata, ${currentPlayerName}.`);
-    await addSystemMessage("Sistema pronto. Inserire codice file.");
+    await addSystemMessage("Analisi profilo completa. Verifica identità confermata.", true);
+    await addSystemMessage(`Accesso autorizzato, Agente ${currentPlayerName}.`);
+    await addSystemMessage("Livello di sicurezza: MASSIMO");
+    await addSystemMessage("Sistema di archiviazione centrale pronto. Inserire codice file.");
     
     startFileInputLoop();
 }

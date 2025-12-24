@@ -1,50 +1,38 @@
 exports.handler = async (event) => {
-    // Aggiungi questi header CORS
     const headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json',
     };
-    
-    // Gestisci le richieste preflight OPTIONS
+
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers,
-            body: ''
-        };
+        return { statusCode: 200, headers, body: '' };
     }
-    
     if (event.httpMethod !== 'POST') {
-        return { 
-            statusCode: 405, 
-            headers,
-            body: JSON.stringify({ error: 'Method Not Allowed' }) 
-        };
+        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
     }
-    
+
     try {
         const { playerName } = JSON.parse(event.body);
-        
-        console.log('Nome ricevuto:', playerName);
-        
-        const validNames = ['zeta'];
-        
-        const playerNameLowerCase = playerName ? playerName.toLowerCase() : '';
-        const valid = validNames.some(validName => 
-            validName.toLowerCase() === playerNameLowerCase
-        );
-        
+        const nameTrim = playerName ? playerName.toString().trim() : '';
+
+        console.log('check-player - nome ricevuto:', JSON.stringify(nameTrim));
+
+        // SEMPLICE REGOLA: valido se non vuoto
+        const valid = nameTrim.length > 0;
+
         return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({ 
-                valid: valid,
-                receivedName: playerName
+            body: JSON.stringify({
+                valid,
+                receivedName: nameTrim,
+                message: valid ? 'Nome accettato' : 'Nome vuoto o non valido'
             })
         };
     } catch (error) {
+        console.error('check-player error:', error);
         return {
             statusCode: 500,
             headers,
