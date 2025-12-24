@@ -29,7 +29,7 @@ exports.handler = async (event) => {
         
         console.log('Password ricevuta:', passcode);
         
-        const validPass = ['abloodymoonandabeatensun'];
+        const validPass = ['gw76x8gn3278382h'];
         const valid = validPass.includes(passcode);
         
         return {
