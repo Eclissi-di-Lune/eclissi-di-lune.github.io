@@ -159,7 +159,7 @@ async function checkPlayerNameBackend(playerName) {
         }
 
         if (data.valid) {
-            currentPlayerName = trimmedName; // impostalo client-side per l'UX
+            currentPlayerName = trimmedName;
             console.log('currentPlayerName impostato a:', JSON.stringify(currentPlayerName));
             await addSystemMessage("Traccia di sangue verificata. Autenticazione valida.");
             await startPasscodeSequence();
