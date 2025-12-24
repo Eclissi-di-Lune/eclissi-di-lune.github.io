@@ -235,7 +235,7 @@ async function checkPasscodeBackend(passcode) {
         }
     } catch (error) {
         console.error('Errore checkPasscodeBackend:', error);
-        await addSystemMessage("ERRORE: Connessione al server di sicurezza fallita.");
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
         setTimeout(startPasscodeSequence, 2000);
     }
 }
@@ -256,7 +256,7 @@ async function startSecurityQuestionSequence() {
 
 async function checkSecurityAnswerBackend(answer) {
     try {
-        await addSystemMessage("Verifica risposta personale...", true);
+        await addSystemMessage("Verifica risposta di sicurezza...", true);
         
         const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-security-answer`, {
             method: 'POST',
@@ -280,7 +280,7 @@ async function checkSecurityAnswerBackend(answer) {
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al server di verifica fallita.");
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
         setTimeout(startSecurityQuestionSequence, 2000);
     }
 }
@@ -288,8 +288,7 @@ async function checkSecurityAnswerBackend(answer) {
 // Secondo step dopo il login
 async function showSecondStep() {
     await addSystemMessage("Analisi profilo completa. Verifica identità confermata.", true);
-    await addSystemMessage(`Accesso autorizzato, Agente ${currentPlayerName}.`);
-    await addSystemMessage("Livello di sicurezza: MASSIMO");
+    await addSystemMessage(`Accesso autorizzato. Benvenuta ${currentPlayerName}!`);
     await addSystemMessage("Sistema di archiviazione centrale pronto. Inserire codice file.");
     
     startFileInputLoop();
