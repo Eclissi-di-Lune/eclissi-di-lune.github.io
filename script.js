@@ -230,10 +230,6 @@ async function checkPasscodeBackend(passcode) {
             await startSecurityQuestionSequence();
         } else {
             await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
-            // Mostriamo tutto il payload di debug se presente
-            if (data && (data.message || data.stripped || data.reason || data.expectedNorm)) {
-                await addSystemMessage(`[DEBUG] server: ${data.message || JSON.stringify(data)}`);
-            }
             await addSystemMessage("Riprovare l'autenticazione...");
             setTimeout(startPasscodeSequence, 2000);
         }

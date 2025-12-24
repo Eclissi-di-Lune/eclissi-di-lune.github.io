@@ -14,13 +14,12 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { playerName } = JSON.parse(event.body);
+        const { playerName } = JSON.parse(event.body || '{}');
         const nameTrim = playerName ? playerName.toString().trim() : '';
 
         console.log('check-player - nome ricevuto:', JSON.stringify(nameTrim));
 
-        // SEMPLICE REGOLA: valido se non vuoto
-        const valid = nameTrim.length > 0;
+        const valid = nameTrim.length > 0 && nameTrim.toLowerCase() === 'zeta';
 
         return {
             statusCode: 200,
@@ -28,7 +27,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 valid,
                 receivedName: nameTrim,
-                message: valid ? 'Nome accettato' : 'Nome vuoto o non valido'
+                message: valid ? 'Nome riconosciuto: Zeta' : 'Nome non riconosciuto (deve essere Zeta)'
             })
         };
     } catch (error) {
