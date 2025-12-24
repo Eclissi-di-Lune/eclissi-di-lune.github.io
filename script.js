@@ -216,11 +216,57 @@ async function checkPasscodeBackend(passcode) {
     }
 }
 
+async function startSecurityQuestionSequence() {
+    await addSystemMessage("Ultimo livello di sicurezza attivo.", true);
+    await addSystemMessage("Domanda di verifica personale:");
+    await addSystemMessage("Quale fu il mio primo amore?", true);
+    
+    showInput("Inserire risposta", async (answer) => {        
+        addUserInputLine(answer);
+        hideInput();
+        
+        await checkSecurityAnswerBackend(answer);
+    });
+}
+
+
+async function checkSecurityAnswerBackend(answer) {
+    try {
+        await addSystemMessage("Verifica risposta personale...", true);
+        
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-security-answer`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                playerName: currentPlayerName,
+                answer: answer 
+            }),
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.valid) {
+            await addSystemMessage("Risposta corretta. Accesso completo autorizzato.");
+            await showSecondStep();
+        } else {
+            await addSystemMessage("ERRORE: Risposta di sicurezza non corretta.");
+            await addSystemMessage("Tentativo fallito. Ritentare dall'inizio.");
+            setTimeout(startTerminalSequence, 2000);
+        }
+    } catch (error) {
+        await addSystemMessage("ERRORE: Connessione al server di verifica fallita.");
+        setTimeout(startSecurityQuestionSequence, 2000);
+    }
+}
+
 // Secondo step dopo il login
 async function showSecondStep() {
-    await addSystemMessage("Analisi profilo dal campione biologico in relazione al codice...", true);
-    await addSystemMessage(`Campione e codice compatibili. Bentornata, ${currentPlayerName}.`);
-    await addSystemMessage("Sistema pronto. Inserire codice file.");
+    await addSystemMessage("Analisi profilo completa. Verifica identità confermata.", true);
+    await addSystemMessage(`Accesso autorizzato, Agente ${currentPlayerName}.`);
+    await addSystemMessage("Livello di sicurezza: MASSIMO");
+    await addSystemMessage("Sistema di archiviazione centrale pronto. Inserire codice file.");
     
     startFileInputLoop();
 }
