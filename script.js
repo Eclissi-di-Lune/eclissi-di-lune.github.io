@@ -193,7 +193,10 @@ async function checkPasscodeBackend(passcode) {
         const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ passcode: passcode }),
+            body: JSON.stringify({ 
+                playerName: currentPlayerName, // Aggiungi questo
+                passcode: passcode 
+            }),
         });
         
         if (!response.ok) {
@@ -203,15 +206,15 @@ async function checkPasscodeBackend(passcode) {
         const data = await response.json();
         
         if (data.valid) {
-            await addSystemMessage("Codice d'accesso convalidato. Accesso consentito.");
-            await showSecondStep();
+            await addSystemMessage("Codice d'accesso convalidato.");
+            await startSecurityQuestionSequence();
         } else {
             await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
             await addSystemMessage("Riprovare l'autenticazione...");
             setTimeout(startPasscodeSequence, 2000);
         }
     } catch (error) {
-        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+        await addSystemMessage("ERRORE: Connessione al server fallita.");
         setTimeout(startPasscodeSequence, 2000);
     }
 }

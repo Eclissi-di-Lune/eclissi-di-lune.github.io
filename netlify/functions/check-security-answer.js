@@ -17,10 +17,9 @@ exports.handler = async (event) => {
         // Sostituisci con la risposta corretta che hai deciso
         const correctAnswer = "Anahita Attar";
         
-        // Confronto case-insensitive
-        const valid = playerName === "Zeta" && 
-                     answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
-        
+        const valid = playerName && 
+                    playerName.toLowerCase() === 'zeta' && 
+                    answer.toLowerCase().trim() === correctAnswer.toLowerCase().trim();
         return {
             statusCode: 200,
             headers,

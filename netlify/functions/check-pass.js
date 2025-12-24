@@ -25,12 +25,14 @@ exports.handler = async (event) => {
     }
     
     try {
-        const { passcode } = JSON.parse(event.body);
-        
-        console.log('Password ricevuta:', passcode);
-        
+        const { playerName, passcode } = JSON.parse(event.body);
+
+        console.log('Password ricevuta per', playerName, ':', passcode);
+
         const validPass = ['5676apaleredmoonandabeatensun364'];
-        const valid = validPass.includes(passcode);
+        const valid = playerName && 
+                    playerName.toLowerCase() === 'zeta' && 
+                    validPass.includes(passcode);
         
         return {
             statusCode: 200,

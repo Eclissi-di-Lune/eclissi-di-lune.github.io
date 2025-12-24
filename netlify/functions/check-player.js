@@ -29,7 +29,7 @@ exports.handler = async (event) => {
         
         console.log('Nome ricevuto:', playerName);
         
-        const validNames = ['zeta'];
+        const validNames = ['Zeta'];
         
         const playerNameLowerCase = playerName ? playerName.toLowerCase() : '';
         const valid = validNames.some(validName => 
