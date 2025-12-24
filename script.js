@@ -165,7 +165,7 @@ async function checkPlayerNameBackend(playerName) {
             await startPasscodeSequence();
         } else {
             await addSystemMessage("ERRORE: Traccia di sangue non riconosciuta.");
-            await addSystemMessage("Fornire una nuova traccia di sangue...");
+            await addSystemMessage("Fornire una nuova traccia di sangue.");
             setTimeout(startTerminalSequence, 2000);
         }
     } catch (error) {
