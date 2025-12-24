@@ -5,39 +5,43 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json',
     };
-
-    if (event.httpMethod === 'OPTIONS') {
-        return { statusCode: 200, headers, body: '' };
-    }
-    if (event.httpMethod !== 'POST') {
-        return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
-    }
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+    if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
 
     try {
-        const { passcode } = JSON.parse(event.body);
-        const passTrim = passcode ? passcode.toString().trim() : '';
+        const { passcode } = JSON.parse(event.body || '{}');
+        const raw = passcode ? passcode.toString() : '';
 
-        console.log('check-pass - passcode ricevuto (len):', passTrim.length, 'value preview:', JSON.stringify(passTrim.slice(0, 10) + (passTrim.length > 10 ? '...' : '')));
+        const normalized = raw.normalize ? raw.normalize('NFKC') : raw;
+        const stripped = normalized.replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
 
-        // Lista delle password valide (case-sensitive)
         const validPass = ['5676apaleredmoonandabeatensun364'];
+        const validPassStripped = validPass.map(p => (p.normalize ? p.normalize('NFKC') : p).replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, ''));
 
-        const valid = validPass.includes(passTrim);
+        console.log('check-pass raw:', JSON.stringify(raw));
+        console.log('normalized:', JSON.stringify(normalized));
+        console.log('stripped:', JSON.stringify(stripped));
+        console.log('validPassStripped:', JSON.stringify(validPassStripped));
+
+        const valid = validPassStripped.includes(stripped);
+
+        const charCodes = Array.from(stripped).slice(0,100).map(c => c.charCodeAt(0));
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 valid,
-                message: valid ? 'Passcode valido' : `Passcode non valido (ricevuta lunghezza=${passTrim.length})`
+                receivedPasscode: raw,
+                lengthReceived: raw.length,
+                lengthStripped: stripped.length,
+                stripped,
+                charCodes,
+                message: valid ? 'Passcode valido' : 'Passcode non valido'
             })
         };
-    } catch (error) {
-        console.error('check-pass error:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Internal Server Error: ' + error.message, valid: false })
-        };
+    } catch (err) {
+        console.error('check-pass error', err);
+        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Server Error: ' + err.message, valid: false }) };
     }
 };

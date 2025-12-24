@@ -195,9 +195,9 @@ async function checkPasscodeBackend(passcode) {
     try {
         await addSystemMessage("Verifica del codice d'accesso...", true);
 
-        const trimmedPass = passcode ? passcode.trim() : '';
-
-        console.log('Client -> check-pass: passcode len =', trimmedPass.length);
+        const trimmedPass = passcode ? passcode : '';
+        console.log('Client -> invio passcode raw:', JSON.stringify(trimmedPass));
+        console.log('Client -> lunghezza:', trimmedPass.length, 'charCodes:', Array.from(trimmedPass).slice(0,100).map(c=>c.charCodeAt(0)));
 
         const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
             method: 'POST',
