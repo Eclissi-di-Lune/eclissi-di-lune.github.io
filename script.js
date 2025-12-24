@@ -195,21 +195,34 @@ async function checkPasscodeBackend(passcode) {
     try {
         await addSystemMessage("Verifica del codice d'accesso...", true);
 
-        const trimmedPass = passcode ? passcode : '';
+        // Assicuriamoci di pulire eventuali spazi invisibili
+        const trimmedPass = passcode ? passcode.toString().trim() : '';
         console.log('Client -> invio passcode raw:', JSON.stringify(trimmedPass));
         console.log('Client -> lunghezza:', trimmedPass.length, 'charCodes:', Array.from(trimmedPass).slice(0,100).map(c=>c.charCodeAt(0)));
 
-        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-pass`, {
+        // Cache-buster per evitare di chiamare una versione cached della function
+        const url = `${API_BASE_URL}/.netlify/functions/check-pass?t=${Date.now()}`;
+        console.log('Client -> fetch URL:', url);
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ passcode: trimmedPass }), // NOTA: non inviamo playerName
+            body: JSON.stringify({ passcode: trimmedPass }), // invio solo passcode
         });
 
-        const data = await response.json();
+        // Proviamo prima a leggere il testo grezzo (utile per debug quando la function non risponde come JSON)
+        const text = await response.text();
+        let data;
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (e) {
+            console.warn('check-pass: response non JSON, testo ricevuto:', text);
+            data = { valid: false, message: 'response non JSON', raw: text };
+        }
         console.log('check-pass response:', data);
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status} - ${data && data.message ? data.message : ''}`);
         }
 
         if (data.valid) {
@@ -217,8 +230,9 @@ async function checkPasscodeBackend(passcode) {
             await startSecurityQuestionSequence();
         } else {
             await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
-            if (data && data.message) {
-                await addSystemMessage(`[DEBUG] server: ${data.message}`);
+            // Mostriamo tutto il payload di debug se presente
+            if (data && (data.message || data.stripped || data.reason || data.expectedNorm)) {
+                await addSystemMessage(`[DEBUG] server: ${data.message || JSON.stringify(data)}`);
             }
             await addSystemMessage("Riprovare l'autenticazione...");
             setTimeout(startPasscodeSequence, 2000);
