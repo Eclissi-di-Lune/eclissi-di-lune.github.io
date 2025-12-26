@@ -2,10 +2,7 @@ let currentPlayerName = '';
 
 // Configurazione dinamica degli URL
 const getBaseUrl = () => {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8888';
-    }
-    return 'https://terminale-az.netlify.app';
+    return window.location.origin;
 };
 
 const API_BASE_URL = getBaseUrl();
