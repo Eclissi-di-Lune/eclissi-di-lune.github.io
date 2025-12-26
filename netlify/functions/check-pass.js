@@ -11,55 +11,90 @@ exports.handler = async (event) => {
 
     try {
         const { passcode } = JSON.parse(event.body || '{}');
-        const raw = passcode ? passcode.toString() : '';
+        
+        // DEFENSIVE: Handle missing passcode
+        if (!passcode) {
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ 
+                    valid: false, 
+                    reason: 'no-passcode-provided' 
+                })
+            };
+        }
 
-        // Normalize and clean (NFKC), remove whitespace and invisible characters
-        const normalized = (raw.normalize ? raw.normalize('NFKC') : raw);
-        const stripped = normalized.replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-        // Expected string
+        // Convert to string and trim
+        const input = String(passcode).trim();
+        
+        // The expected passcode
         const expected = '5676apaleredmoonandabeatensun364';
-        const expectedNorm = (expected.normalize ? expected.normalize('NFKC') : expected).replace(/\s+/g, '').replace(/[\u200B-\u200D\uFEFF]/g, '');
-
-        // ONLY accept exact match
-        const exactMatch = stripped === expectedNorm;
-        const valid = exactMatch;  // Only this one!
-
-        console.log('check-pass raw:', JSON.stringify(raw));
-        console.log('normalized:', JSON.stringify(normalized));
-        console.log('stripped:', JSON.stringify(stripped));
-        console.log('expectedNorm:', JSON.stringify(expectedNorm));
-        console.log('exactMatch:', exactMatch);
-
-        // For debugging, let's see if it's a substring match
-        const isSubstring = expectedNorm.includes(stripped) && stripped !== expectedNorm;
-        const containsSubstring = stripped.includes(expectedNorm) && stripped !== expectedNorm;
+        
+        // SIMPLE EXACT COMPARISON - NO NORMALIZATION
+        const valid = input === expected;
+        
+        // DEBUG: Log everything
+        console.log('=== DEBUG LOG ===');
+        console.log('Input received:', JSON.stringify(input));
+        console.log('Input type:', typeof input);
+        console.log('Input length:', input.length);
+        console.log('Expected:', JSON.stringify(expected));
+        console.log('Expected length:', expected.length);
+        console.log('Valid?', valid);
+        
+        // Check if it's a substring
+        const isSubstring = expected.includes(input) && input !== expected;
+        const isSuperstring = input.includes(expected) && input !== expected;
         
         if (isSubstring) {
-            console.log('WARNING: Input is a substring of expected (too short)');
+            console.log('WARNING: Input is a SUBSTRING of expected!');
+            console.log('Input:', input);
+            console.log('Expected:', expected);
         }
-        if (containsSubstring) {
-            console.log('WARNING: Input contains expected but is longer');
+        
+        if (isSuperstring) {
+            console.log('WARNING: Input is a SUPERSTRING of expected!');
         }
-
-        const charCodes = Array.from(stripped).slice(0,200).map(c => c.charCodeAt(0));
+        
+        // Character-by-character comparison
+        console.log('Character comparison:');
+        for (let i = 0; i < Math.max(input.length, expected.length); i++) {
+            const inputChar = input[i] || 'MISSING';
+            const expectedChar = expected[i] || 'MISSING';
+            const charCodeInput = input[i] ? input.charCodeAt(i) : 'N/A';
+            const charCodeExpected = expected[i] ? expected.charCodeAt(i) : 'N/A';
+            
+            if (inputChar !== expectedChar) {
+                console.log(`Position ${i}: Input "${inputChar}" (${charCodeInput}) vs Expected "${expectedChar}" (${charCodeExpected})`);
+            }
+        }
 
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 valid,
-                receivedPasscode: raw,
-                lengthReceived: raw.length,
-                lengthStripped: stripped.length,
-                stripped,
-                expectedNorm,
-                charCodes,
-                reason: valid ? 'exact-match' : (isSubstring ? 'too-short' : 'no-match')
+                input,
+                expected,
+                inputLength: input.length,
+                expectedLength: expected.length,
+                isExactMatch: input === expected,
+                isSubstring,
+                isSuperstring,
+                reason: valid ? 'exact-match' : 
+                       isSubstring ? 'too-short' : 
+                       isSuperstring ? 'too-long' : 'different-content'
             })
         };
     } catch (err) {
         console.error('check-pass error', err);
-        return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal Server Error: ' + err.message, valid: false }) };
+        return { 
+            statusCode: 500, 
+            headers, 
+            body: JSON.stringify({ 
+                error: 'Internal Server Error: ' + err.message, 
+                valid: false 
+            }) 
+        };
     }
 };
