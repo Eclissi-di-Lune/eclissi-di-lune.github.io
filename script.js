@@ -2,7 +2,8 @@ let currentPlayerName = '';
 
 // Configurazione dinamica degli URL
 const getBaseUrl = () => {
-    return window.location.origin;
+    // Always return your Netlify site URL
+    return 'https://terminale-az.netlify.app';
 };
 
 const API_BASE_URL = getBaseUrl();
