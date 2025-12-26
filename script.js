@@ -145,7 +145,7 @@ async function checkPlayerNameBackend(playerName) {
 
         console.log('Client -> check-player: playerName =', JSON.stringify(trimmedName));
 
-        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player`, {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-player-047`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ playerName: trimmedName }),
@@ -177,9 +177,9 @@ async function checkPlayerNameBackend(playerName) {
 
 // Nuova sequenza per il passcode
 async function startPasscodeSequence() {
-    await addSystemMessage("Inserire un codice d'accesso valido.");
+    await addSystemMessage("Inserire una password valida.");
     
-    showInput("Inserire codice d'accesso", async (passcode) => {        
+    showInput("Inserire password.", async (passcode) => {        
         addUserInputLine(passcode);
         hideInput();
         
@@ -193,7 +193,7 @@ async function startPasscodeSequence() {
 
 async function checkPasscodeBackend(passcode) {
     try {
-        await addSystemMessage("Verifica del codice d'accesso...", true);
+        await addSystemMessage("Verifica della password...", true);
 
         // Assicuriamoci di pulire eventuali spazi invisibili
         const trimmedPass = passcode ? passcode.toString().trim() : '';
@@ -201,7 +201,7 @@ async function checkPasscodeBackend(passcode) {
         console.log('Client -> lunghezza:', trimmedPass.length, 'charCodes:', Array.from(trimmedPass).slice(0,100).map(c=>c.charCodeAt(0)));
 
         // Cache-buster per evitare di chiamare una versione cached della function
-        const url = `${API_BASE_URL}/.netlify/functions/check-pass?t=${Date.now()}`;
+        const url = `${API_BASE_URL}/.netlify/functions/check-password-047?t=${Date.now()}`;
         console.log('Client -> fetch URL:', url);
 
         const response = await fetch(url, {
@@ -216,10 +216,75 @@ async function checkPasscodeBackend(passcode) {
         try {
             data = text ? JSON.parse(text) : {};
         } catch (e) {
-            console.warn('check-pass: response non JSON, testo ricevuto:', text);
+            console.warn('check-password: response non JSON, testo ricevuto:', text);
             data = { valid: false, message: 'response non JSON', raw: text };
         }
-        console.log('check-pass response:', data);
+        console.log('check-password response:', data);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status} - ${data && data.message ? data.message : ''}`);
+        }
+
+        if (data.valid) {
+            await addSystemMessage("Password convalidata. Codice d'accesso richiesto.");
+            await startPasskeySequence();  // <-- FIXED: Start the passkey sequence
+        } else {
+            await addSystemMessage("ERRORE: Password non riconosciuta.");
+            await addSystemMessage("Riprovare l'autenticazione...");
+            setTimeout(startPasscodeSequence, 2000);
+        }
+    } catch (error) {
+        console.error('Errore checkPasscodeBackend:', error);
+        await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
+        setTimeout(startPasscodeSequence, 2000);
+    }
+}
+
+// Nuova sequenza per il passkey
+async function startPasskeySequence() {
+    await addSystemMessage("Inserire un codice d'accesso valido.");
+    
+    showInput("Inserire codice d'accesso.", async (passkey) => {        
+        addUserInputLine(passkey);
+        hideInput();
+        
+        const hasSpecialEffect = await checkGlitchEffects(passkey);
+        
+        if (!hasSpecialEffect) {
+            await checkPasskeyBackend(passkey);
+        }
+    });
+}
+
+async function checkPasskeyBackend(passkey) {
+    try {
+        await addSystemMessage("Verifica del codice d'accesso...", true);
+
+        // Assicuriamoci di pulire eventuali spazi invisibili
+        const trimmedPass = passkey ? passkey.toString().trim() : '';
+        console.log('Client -> invio passkey raw:', JSON.stringify(trimmedPass));
+        console.log('Client -> lunghezza:', trimmedPass.length, 'charCodes:', Array.from(trimmedPass).slice(0,100).map(c=>c.charCodeAt(0)));
+
+        // Cache-buster per evitare di chiamare una versione cached della function
+        const url = `${API_BASE_URL}/.netlify/functions/check-passkey-047?t=${Date.now()}`;
+        console.log('Client -> fetch URL:', url);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passkey: trimmedPass }), // invio solo passkey
+        });
+
+        // Proviamo prima a leggere il testo grezzo (utile per debug quando la function non risponde come JSON)
+        const text = await response.text();
+        let data;
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (e) {
+            console.warn('check-passkey: response non JSON, testo ricevuto:', text);
+            data = { valid: false, message: 'response non JSON', raw: text };
+        }
+        console.log('check-passkey response:', data);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status} - ${data && data.message ? data.message : ''}`);
@@ -231,12 +296,12 @@ async function checkPasscodeBackend(passcode) {
         } else {
             await addSystemMessage("ERRORE: Codice d'accesso non riconosciuto.");
             await addSystemMessage("Riprovare l'autenticazione...");
-            setTimeout(startPasscodeSequence, 2000);
+            setTimeout(startPasskeySequence, 2000);  // <-- Go back to passkey prompt
         }
     } catch (error) {
-        console.error('Errore checkPasscodeBackend:', error);
+        console.error('Errore checkPasskeyBackend:', error);
         await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
-        setTimeout(startPasscodeSequence, 2000);
+        setTimeout(startPasskeySequence, 2000);
     }
 }
 
@@ -258,7 +323,7 @@ async function checkSecurityAnswerBackend(answer) {
     try {
         await addSystemMessage("Verifica risposta di sicurezza...", true);
         
-        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-security-answer`, {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-security-answer-047`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -311,7 +376,7 @@ async function checkFileCodeBackend(fileCode) {
     try {
         await addSystemMessage("Verifica codice file in corso...", true);
         
-        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-code`, {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/check-code-047`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: fileCode }),
