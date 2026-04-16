@@ -33,11 +33,6 @@ exports.handler = async (event) => {
         
         // EXACT COMPARISON
         const valid = input === expected;
-        
-        console.log('=== RUNNING NEW FUNCTION ===');
-        console.log('Input:', JSON.stringify(input));
-        console.log('Expected:', JSON.stringify(expected));
-        console.log('Valid:', valid);
 
         return {
             statusCode: 200,

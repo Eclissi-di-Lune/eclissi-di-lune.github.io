@@ -217,7 +217,7 @@ async function checkPasscodeBackend(passcode) {
             console.warn('check-password: response non JSON, testo ricevuto:', text);
             data = { valid: false, message: 'response non JSON', raw: text };
         }
-        console.log('check-password response:', data);
+        // console.log('check-password response:', data);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status} - ${data && data.message ? data.message : ''}`);
@@ -282,7 +282,7 @@ async function checkPasskeyBackend(passkey) {
             console.warn('check-passkey: response non JSON, testo ricevuto:', text);
             data = { valid: false, message: 'response non JSON', raw: text };
         }
-        console.log('check-passkey response:', data);
+        // console.log('check-passkey response:', data);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status} - ${data && data.message ? data.message : ''}`);
