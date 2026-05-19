@@ -513,12 +513,13 @@ async function showSpecialEffect(data) {
         // Dopo l'effetto, gestisci la chiusura
         if (data.closePage) {
             setTimeout(() => {
-                // Tenta di chiudere la finestra
+
                 if (!window.closed) {
-                    window.close();
+                    window.location.replace('about:blank');
                 }
                 // Fallback: mostra messaggio di errore
                 setTimeout(() => {
+                    
                     document.body.innerHTML = `
                         <div style="color: red; text-align: center; margin-top: 50px; padding: 20px;">
                             <h1>S I S T E M A   C O M P R O M E S S O</h1>
