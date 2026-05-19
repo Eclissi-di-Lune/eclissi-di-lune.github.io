@@ -126,6 +126,9 @@ async function startTerminalSequence() {
         addUserInputLine(playerName);
         hideInput();
         
+        const hasErrorEffect = await checkErrorEffects(playerName);
+        if (hasErrorEffect) return;
+
         const hasSpecialEffect = await checkGlitchEffects(playerName);
         
         if (!hasSpecialEffect) {
@@ -397,6 +400,52 @@ async function checkFileCodeBackend(fileCode) {
     } catch (error) {
         await addSystemMessage("ERRORE: Connessione al ██████████ fallita.");
     }
+}
+async function checkErrorEffects(playerName) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/.netlify/functions/error-effect`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ playerName: playerName }),
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.effect === 'error_sequence') {
+            // Mostra la sequenza di errore nel terminale
+            await showErrorSequence(data.data);
+            return true; // Blocca il flusso successivo
+        }
+        return false;
+    } catch (error) {
+        console.error('Errore chiamata error-effect:', error);
+        return false;
+    }
+}
+
+// Funzione per gestire l'effetto errore (con visualizzazione a schermo)
+async function showErrorSequence(errorData) {
+    // Nascondi l'input corrente se visibile
+    hideInput();
+    
+    // 1. Mostra i messaggi di errore nel terminale
+    await addSystemMessage("RILEVATA ANOMALIA CRITICA", true);
+    await addSystemMessage(errorData.nullPointerException || "NullPointerException sconosciuto", true);
+    await addSystemMessage(errorData.NPEMessage || "Errore logico imprevisto", true);
+    await addSystemMessage(errorData.accessDeniedException || "AccessDeniedException", true);
+    await addSystemMessage(errorData.ADEMessage || "Errore di consistenza emotiva", true);
+    
+    // Piccola pausa per leggere
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // 2. Mostra l'ASCII art con flicker e chiusura
+    await showSpecialEffect({
+        effect: 'ascii_art',
+        art: errorData.herhungerisgrowing || errorData.art,
+        closePage: true
+    });
 }
 
 // Funzione per verificare effetti speciali
